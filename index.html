@@ -451,13 +451,40 @@ nav{
 /* Bottom nav shown via JS after login */
 .bottom-nav.visible{display:block!important;}
 
+
+/* ── MOBILE BOTTOM NAV ── */
+.bnav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(8,6,22,.97);
+  backdrop-filter: blur(20px);
+  border-top: .5px solid rgba(139,92,246,.25);
+  padding: .4rem .5rem calc(.4rem + env(safe-area-inset-bottom));
+}
+.bnav-row {
+  display: flex; overflow-x: auto; gap: 2px;
+  scrollbar-width: none; justify-content: space-around;
+}
+.bnav-row::-webkit-scrollbar { display: none; }
+.bnav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 5px 8px; border-radius: 10px; border: none;
+  background: transparent; cursor: pointer; color: rgba(200,216,232,.4);
+  font-family: inherit; transition: all .15s; flex-shrink: 0; min-width: 50px;
+}
+.bnav-item.active { color: #a78bfa; background: rgba(139,92,246,.15); }
+.bnav-item:active { transform: scale(.92); }
+.bnav-i { font-size: 19px; line-height: 1; }
+.bnav-l { font-size: 9px; white-space: nowrap; }
+@media (max-width: 700px) {
+  .bnav { display: block; }
+  .page { padding-bottom: 85px; }
+  nav .nav-tabs, nav .nav-right { display: none; }
+}
 </style>
 </head>
 <body>
 <canvas id="galaxy-canvas"></canvas>
-
-<!-- DEBUG PANEL - remove after fix -->
-<div id="debug-panel" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a0a2e;color:#f0a0a0;font-size:11px;font-family:monospace;padding:8px;max-height:40vh;overflow-y:auto;border-bottom:1px solid #8b5cf6;"></div>
 
 <div class="app">
 
@@ -928,6 +955,23 @@ nav{
   </div>
 </div>
 
+<!-- MOBILE NAV -->
+<nav class="bnav" id="bnav">
+  <div class="bnav-row">
+    <button class="bnav-item active" data-p="dashboard"><span class="bnav-i">🏠</span><span class="bnav-l">Ana Sayfa</span></button>
+    <button class="bnav-item" data-p="chart"><span class="bnav-i">⭕</span><span class="bnav-l">Haritam</span></button>
+    <button class="bnav-item" data-p="forecast"><span class="bnav-i">🔮</span><span class="bnav-l">Öngörüler</span></button>
+    <button class="bnav-item" data-p="synastry"><span class="bnav-i">💕</span><span class="bnav-l">Aşk</span></button>
+    <button class="bnav-item" data-p="personality"><span class="bnav-i">✨</span><span class="bnav-l">Kişilik</span></button>
+    <button class="bnav-item" data-p="career"><span class="bnav-i">💼</span><span class="bnav-l">Kariyer</span></button>
+    <button class="bnav-item" data-p="planets"><span class="bnav-i">🪐</span><span class="bnav-l">Gezegenler</span></button>
+    <button class="bnav-item" data-p="skymap"><span class="bnav-i">🌌</span><span class="bnav-l">Gökyüzü</span></button>
+    <button class="bnav-item" data-p="cosmos"><span class="bnav-i">🔭</span><span class="bnav-l">Kozmos</span></button>
+    <button class="bnav-item" data-p="chat"><span class="bnav-i">🤖</span><span class="bnav-l">AI</span></button>
+    <button class="bnav-item" data-p="profile"><span class="bnav-i">👤</span><span class="bnav-l">Profil</span></button>
+  </div>
+</nav>
+
 </div><!-- /app -->
 
 <!-- API KEY MODAL -->
@@ -945,25 +989,6 @@ nav{
 </div>
 
 <script>
-// ── Error capture (shows on screen) ──────────
-window._velumErrors = [];
-window.onerror = function(msg, src, line, col, err){
-  const panel = document.getElementById('debug-panel');
-  if(panel){
-    panel.style.display = 'block';
-    panel.innerHTML += '<div>❌ ' + msg + ' (line ' + line + ')</div>';
-  }
-  window._velumErrors.push({msg, line});
-  return false;
-};
-window.addEventListener('unhandledrejection', function(e){
-  const panel = document.getElementById('debug-panel');
-  if(panel){
-    panel.style.display = 'block';
-    panel.innerHTML += '<div>⚠️ Promise: ' + (e.reason?.message||e.reason) + '</div>';
-  }
-});
-
 // VirtualSky scripts loaded lazily when sky page opens
 window._skyScriptsLoaded = false;
 window._skyScriptsLoading = false;
@@ -1344,7 +1369,6 @@ function lunarPhase(dateStr){
 const APP={state:null};
 
 document.addEventListener('DOMContentLoaded',()=>{
-  try{
   bindNav();
   document.getElementById('create-chart-btn').addEventListener('click',createChart);
   document.getElementById('syn-calc-btn').addEventListener('click',calcSynastry);
@@ -1375,24 +1399,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     el.addEventListener('click',()=>showPage(el.dataset.navigate));
   });
   loadSaved();
-  } catch(e) {
-    const panel=document.getElementById('debug-panel');
-    if(panel){ panel.style.display='block'; panel.innerHTML+='<div>❌ INIT ERROR: '+e.message+' line:'+e.stack?.split('\n')[1]+'</div>'; }
-  }
 });
 
 function createChart(){
-  const dbg=document.getElementById('debug-panel');
-  if(dbg){ dbg.style.display='block'; dbg.innerHTML+='<div>→ createChart called</div>'; }
-  try{
-    _createChart();
-    if(dbg) dbg.innerHTML+='<div>✓ createChart OK, sun='+APP.state?.sun+'</div>';
-  }catch(e){
-    if(dbg){ dbg.innerHTML+='<div>❌ createChart: '+e.message+'</div>'; }
-    console.error(e);
-  }
-}
-function _createChart(){
   const name=document.getElementById('inp-name').value.trim()||'Misafir';
   const date=document.getElementById('inp-date').value;
   const time=document.getElementById('inp-time').value||'12:00';
@@ -1424,19 +1433,10 @@ function _createChart(){
   document.getElementById('main-nav').classList.remove('hidden');
   const bnavEl=document.getElementById('bottom-nav');
   if(bnavEl) bnavEl.classList.add('visible');
+  const _bn=document.getElementById('bnav');if(_bn)_bn.style.display='block';
   showPage('dashboard');
   // Then build content (DOM is now active)
-  requestAnimationFrame(()=>{
-    try{
-      buildAll();
-      const dbg2=document.getElementById('debug-panel');
-      if(dbg2) dbg2.innerHTML+='<div>✓ buildAll OK</div>';
-    }catch(e){
-      const dbg2=document.getElementById('debug-panel');
-      if(dbg2){ dbg2.style.display='block'; dbg2.innerHTML+='<div>❌ buildAll: '+e.message+'<br>'+e.stack?.split('\n')[1]+'</div>'; }
-      console.error('buildAll error:',e);
-    }
-  });
+  requestAnimationFrame(()=>buildAll());
 }
 
 function buildAll(stateOverride){
@@ -2186,10 +2186,11 @@ function showPage(id){
       bnav.classList.add('visible');
     }
   }
-  if(id==='onboarding')document.getElementById('main-nav').classList.add('hidden');
+  if(id==='onboarding'){document.getElementById('main-nav').classList.add('hidden');const _bn3=document.getElementById('bnav');if(_bn3)_bn3.style.display='none';}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id)?.classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
+  document.querySelectorAll('.bnav-item').forEach(t=>t.classList.toggle('active',t.dataset.p===id));
   document.querySelectorAll('.bnav-btn').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
   if(id==='chart'&&APP.state)requestAnimationFrame(()=>buildChart(APP.state));
   if(id==='planets'&&APP.state) buildPlanetsPage(APP.state);
@@ -3036,6 +3037,7 @@ function loadSaved(){
     document.getElementById('main-nav').classList.remove('hidden');
     const bnavEl2=document.getElementById('bottom-nav');
     if(bnavEl2) bnavEl2.classList.add('visible');
+    const _bn2=document.getElementById('bnav');if(_bn2)_bn2.style.display='block';
     showPage('dashboard');
     requestAnimationFrame(()=>buildAll());
   }catch(_){}
