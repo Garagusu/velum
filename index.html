@@ -455,6 +455,10 @@ nav{
 </head>
 <body>
 <canvas id="galaxy-canvas"></canvas>
+
+<!-- DEBUG PANEL - remove after fix -->
+<div id="debug-panel" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a0a2e;color:#f0a0a0;font-size:11px;font-family:monospace;padding:8px;max-height:40vh;overflow-y:auto;border-bottom:1px solid #8b5cf6;"></div>
+
 <div class="app">
 
 <!-- NAV -->
@@ -940,8 +944,36 @@ nav{
   </div>
 </div>
 
-<script src="stuquery.js"></script>
-<script src="virtualsky.min.js"></script>
+<script>
+// ── Error capture (shows on screen) ──────────
+window._velumErrors = [];
+window.onerror = function(msg, src, line, col, err){
+  const panel = document.getElementById('debug-panel');
+  if(panel){
+    panel.style.display = 'block';
+    panel.innerHTML += '<div>❌ ' + msg + ' (line ' + line + ')</div>';
+  }
+  window._velumErrors.push({msg, line});
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e){
+  const panel = document.getElementById('debug-panel');
+  if(panel){
+    panel.style.display = 'block';
+    panel.innerHTML += '<div>⚠️ Promise: ' + (e.reason?.message||e.reason) + '</div>';
+  }
+});
+
+// Safe loader for external scripts
+function loadScript(src, cb){
+  const s=document.createElement('script');
+  s.src=src;
+  s.onload=()=>{if(cb)cb(null);};
+  s.onerror=()=>{console.warn('Script load failed:',src);if(cb)cb(new Error('failed'));};
+  document.head.appendChild(s);
+}
+loadScript('stuquery.js', ()=>loadScript('virtualsky.min.js', ()=>{}));
+</script>
 <script>
 // ═══════════════════════════════════════════════
 // GALAXY BACKGROUND
@@ -951,7 +983,9 @@ nav{
 // ═══════════════════════════════════════════════
 (function(){
   const c=document.getElementById('galaxy-canvas');
+  if(!c)return;
   const ctx=c.getContext('2d');
+  if(!ctx)return;
   let W,H,stars=[],meteors=[],meteorTimer=0;
 
   // ── Gerçek takımyıldız verileri (normalize 0-1 koordinat) ──
@@ -1298,6 +1332,9 @@ function lunarPhase(dateStr){
 const APP={state:null};
 
 document.addEventListener('DOMContentLoaded',()=>{
+  const panel=document.getElementById('debug-panel');
+  if(panel) panel.innerHTML+='<div>✓ DOMContentLoaded fired</div>';
+  try{
   bindNav();
   document.getElementById('create-chart-btn').addEventListener('click',createChart);
   document.getElementById('syn-calc-btn').addEventListener('click',calcSynastry);
@@ -1327,10 +1364,28 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('[data-navigate]').forEach(el=>{
     el.addEventListener('click',()=>showPage(el.dataset.navigate));
   });
+  const panel2=document.getElementById('debug-panel');
+  if(panel2) panel2.innerHTML+='<div>✓ Listeners bound, calling loadSaved...</div>';
   loadSaved();
+  if(panel2) panel2.innerHTML+='<div>✓ loadSaved done</div>';
+  } catch(e) {
+    const panel=document.getElementById('debug-panel');
+    if(panel){ panel.style.display='block'; panel.innerHTML+='<div>❌ INIT ERROR: '+e.message+' line:'+e.stack?.split('\n')[1]+'</div>'; }
+  }
 });
 
 function createChart(){
+  const dbg=document.getElementById('debug-panel');
+  if(dbg){ dbg.style.display='block'; dbg.innerHTML+='<div>→ createChart called</div>'; }
+  try{
+    _createChart();
+    if(dbg) dbg.innerHTML+='<div>✓ createChart OK, sun='+APP.state?.sun+'</div>';
+  }catch(e){
+    if(dbg){ dbg.innerHTML+='<div>❌ createChart: '+e.message+'</div>'; }
+    console.error(e);
+  }
+}
+function _createChart(){
   const name=document.getElementById('inp-name').value.trim()||'Misafir';
   const date=document.getElementById('inp-date').value;
   const time=document.getElementById('inp-time').value||'12:00';
@@ -1364,7 +1419,17 @@ function createChart(){
   if(bnavEl) bnavEl.classList.add('visible');
   showPage('dashboard');
   // Then build content (DOM is now active)
-  requestAnimationFrame(()=>buildAll());
+  requestAnimationFrame(()=>{
+    try{
+      buildAll();
+      const dbg2=document.getElementById('debug-panel');
+      if(dbg2) dbg2.innerHTML+='<div>✓ buildAll OK</div>';
+    }catch(e){
+      const dbg2=document.getElementById('debug-panel');
+      if(dbg2){ dbg2.style.display='block'; dbg2.innerHTML+='<div>❌ buildAll: '+e.message+'<br>'+e.stack?.split('\n')[1]+'</div>'; }
+      console.error('buildAll error:',e);
+    }
+  });
 }
 
 function buildAll(stateOverride){
@@ -2463,7 +2528,7 @@ function selectPlanet(key,s){
 let skyNow=null, skyBirth=null;
 
 function initSkyMap(state){
-  if(typeof S==='undefined'){
+  if(typeof S==='undefined'||typeof S.virtualsky==='undefined'){
     console.warn('VirtualSky: stuQuery(S) not loaded');
     showSkyFallback();
     return;
