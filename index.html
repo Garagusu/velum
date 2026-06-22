@@ -414,6 +414,42 @@ nav{
   .cosmos-title{font-size:17px;}
 }
 
+
+/* ── MOBILE BOTTOM NAV ── */
+.bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:rgba(8,6,22,.95);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:.5px solid var(--border);
+  padding:.5rem .25rem calc(.5rem + env(safe-area-inset-bottom));
+}
+.bottom-nav-scroll{
+  display:flex;overflow-x:auto;gap:2px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  justify-content:space-around;
+}
+.bottom-nav-scroll::-webkit-scrollbar{display:none;}
+.bnav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 10px;border-radius:12px;border:none;
+  background:transparent;cursor:pointer;
+  color:var(--dim2);font-family:inherit;
+  transition:all .18s;flex-shrink:0;min-width:56px;
+}
+.bnav-btn.active{color:var(--purple3);background:rgba(139,92,246,.15);}
+.bnav-btn:active{transform:scale(.93);}
+.bnav-icon{font-size:20px;line-height:1;}
+.bnav-label{font-size:9px;letter-spacing:.3px;white-space:nowrap;}
+
+/* Page padding for bottom nav on mobile */
+@media(max-width:700px){
+  .bottom-nav{display:block;}
+  .page{padding-bottom:90px;}
+  nav .nav-tabs{display:none;}
+  nav .nav-right{display:none;}
+}
+
 </style>
 </head>
 <body>
@@ -438,6 +474,56 @@ nav{
   </div>
   <div class="nav-right">
     <div class="nav-avatar" onclick="showPage('profile')">✦</div>
+  </div>
+</nav>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-scroll">
+    <button class="bnav-btn active" data-page="dashboard">
+      <span class="bnav-icon">🏠</span>
+      <span class="bnav-label">Ana Sayfa</span>
+    </button>
+    <button class="bnav-btn" data-page="chart">
+      <span class="bnav-icon">⭕</span>
+      <span class="bnav-label">Haritam</span>
+    </button>
+    <button class="bnav-btn" data-page="forecast">
+      <span class="bnav-icon">🔮</span>
+      <span class="bnav-label">Öngörüler</span>
+    </button>
+    <button class="bnav-btn" data-page="synastry">
+      <span class="bnav-icon">💕</span>
+      <span class="bnav-label">Aşk</span>
+    </button>
+    <button class="bnav-btn" data-page="personality">
+      <span class="bnav-icon">✨</span>
+      <span class="bnav-label">Kişilik</span>
+    </button>
+    <button class="bnav-btn" data-page="career">
+      <span class="bnav-icon">💼</span>
+      <span class="bnav-label">Kariyer</span>
+    </button>
+    <button class="bnav-btn" data-page="planets">
+      <span class="bnav-icon">🪐</span>
+      <span class="bnav-label">Gezegenler</span>
+    </button>
+    <button class="bnav-btn" data-page="skymap">
+      <span class="bnav-icon">🌌</span>
+      <span class="bnav-label">Gökyüzü</span>
+    </button>
+    <button class="bnav-btn" data-page="cosmos">
+      <span class="bnav-icon">🔭</span>
+      <span class="bnav-label">Kozmos</span>
+    </button>
+    <button class="bnav-btn" data-page="chat">
+      <span class="bnav-icon">🤖</span>
+      <span class="bnav-label">AI</span>
+    </button>
+    <button class="bnav-btn" data-page="profile">
+      <span class="bnav-icon">👤</span>
+      <span class="bnav-label">Profil</span>
+    </button>
   </div>
 </nav>
 
@@ -1987,6 +2073,10 @@ function getFallback(q,s){
 // NAVIGATION
 // ═══════════════════════════════════════════════
 function bindNav(){
+  // Bottom nav
+  document.querySelectorAll('.bnav-btn').forEach(b=>{
+    b.addEventListener('click',()=>showPage(b.dataset.page));
+  });
   document.querySelectorAll('.nav-tab').forEach(b=>{
     b.addEventListener('click',()=>showPage(b.dataset.page));
   });
@@ -2004,10 +2094,14 @@ function bindNav(){
 }
 
 function showPage(id){
+  // Show/hide bottom nav
+  const bnav=document.getElementById('bottom-nav');
+  if(bnav) bnav.style.display=(id==='onboarding'?'none':'block');
   if(id==='onboarding')document.getElementById('main-nav').classList.add('hidden');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id)?.classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
+  document.querySelectorAll('.bnav-btn').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
   if(id==='chart'&&APP.state)requestAnimationFrame(()=>buildChart(APP.state));
   if(id==='planets'&&APP.state) buildPlanetsPage(APP.state);
   if(id==='cosmos'){
