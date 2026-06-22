@@ -78,6 +78,10 @@ nav{
 .form-input[type="date"],.form-input[type="time"]{color-scheme:dark;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .form-hint{font-size:11px;color:var(--dim2);margin-top:5px;}
+#city-dropdown li{padding:9px 14px;font-size:13px;color:var(--silver);cursor:pointer;border-bottom:.5px solid var(--border);transition:background .15s;}
+#city-dropdown li:last-child{border-bottom:none;}
+#city-dropdown li:hover{background:rgba(139,92,246,.15);}
+#city-dropdown li span{font-size:11px;color:var(--dim2);display:block;margin-top:2px;}
 .form-hint a{color:var(--purple2);}
 .btn-cosmic{width:100%;padding:14px;background:linear-gradient(135deg,var(--purple),#4c1d95);border:none;border-radius:var(--r);color:#fff;font-size:15px;font-family:inherit;letter-spacing:1px;cursor:pointer;transition:transform .18s,box-shadow .18s;margin-top:.5rem;}
 .btn-cosmic:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(139,92,246,.4);}
@@ -332,9 +336,13 @@ nav{
           <label class="form-label" for="inp-time">Doğum Saati</label>
           <input class="form-input" id="inp-time" type="time" value="14:30"/>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="position:relative;">
           <label class="form-label" for="inp-city">Doğum Yeri</label>
-          <input class="form-input" id="inp-city" type="text" placeholder="İstanbul..."/>
+          <input class="form-input" id="inp-city" type="text" placeholder="Şehir ara... (örn. İstanbul)" autocomplete="off"/>
+          <div id="city-status" style="font-size:11px;margin-top:5px;color:var(--dim2);min-height:16px;"></div>
+          <ul id="city-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card2);border:.5px solid var(--border2);border-radius:var(--r);z-index:50;max-height:200px;overflow-y:auto;list-style:none;margin-top:4px;"></ul>
+          <input type="hidden" id="inp-lat" value=""/>
+          <input type="hidden" id="inp-lon" value=""/>
         </div>
       </div>
       <div class="form-group">
@@ -794,6 +802,8 @@ function createChart(){
   const date=document.getElementById('inp-date').value;
   const time=document.getElementById('inp-time').value||'12:00';
   const city=document.getElementById('inp-city').value.trim()||'Bilinmiyor';
+  const lat=parseFloat(document.getElementById('inp-lat').value)||null;
+  const lon=parseFloat(document.getElementById('inp-lon').value)||null;
   const apiKey=document.getElementById('inp-apikey').value.trim();
   if(!date){alert('Lütfen doğum tarihini gir!');return;}
   if(apiKey) sessionStorage.setItem('velum_groq_key',apiKey);
@@ -808,7 +818,7 @@ function createChart(){
   const planets=calcPlanets(date);
 
   APP.state={
-    name,birthDate:date,birthTime:time,birthCity:city,
+    name,birthDate:date,birthTime:time,birthCity:city,lat,lon,
     sun:SIGNS[sunIdx],sunDeg:day%30,sunIdx,
     moon:SIGNS[moonIdx],moonDeg:(month*3+day)%30,moonIdx,
     asc:SIGNS[ascIdx],ascDeg:(hour*2+minute/30)|0,ascIdx,
@@ -1302,14 +1312,46 @@ async function sendChat(text){
 
   try{
     const s=APP.state;
-    const sys=`Sen VELUM platformunun yapay zeka astroloğusun. Adın "Velum". Türkçe konuş.
+    const today=new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const todayTransits=calcPlanets(new Date().toISOString().split('T')[0]).map(p=>`${p.name} ${p.sign} ${p.deg}°`).join(', ');
+    const phase=lunarPhase(new Date().toISOString().split('T')[0]);
+    const sys=`Sen VELUM platformunun uzman yapay zeka astroloğusun. Adın "Velum". Her zaman Türkçe konuş.
 
-KULLANICI: ${s.name}
-Doğum: ${s.birthDate} | Saat: ${s.birthTime} | Yer: ${s.birthCity}
+═══ KULLANICI DOĞUM HARİTASI ═══
+İsim: ${s.name}
+Doğum Tarihi: ${s.birthDate} | Saat: ${s.birthTime} | Yer: ${s.birthCity}${s.lat?` (${s.lat.toFixed(2)}°N, ${s.lon?s.lon.toFixed(2):0}°E)`:''}
 Güneş: ${s.sun} ${s.sunDeg}° | Ay: ${s.moon} ${s.moonDeg}° | Yükselen: ${s.asc} ${s.ascDeg}°
-Gezegenler: ${(s.planets||[]).map(p=>`${p.name} ${p.sign}`).join(', ')}
+Merkür: ${s.planets?.find(p=>p.key==='mercury')?.sign||'?'} | Venüs: ${s.planets?.find(p=>p.key==='venus')?.sign||'?'} | Mars: ${s.planets?.find(p=>p.key==='mars')?.sign||'?'}
+Jüpiter: ${s.planets?.find(p=>p.key==='jupiter')?.sign||'?'} | Satürn: ${s.planets?.find(p=>p.key==='saturn')?.sign||'?'}
+Uranüs: ${s.planets?.find(p=>p.key==='uranus')?.sign||'?'} | Neptün: ${s.planets?.find(p=>p.key==='neptune')?.sign||'?'} | Plüton: ${s.planets?.find(p=>p.key==='pluto')?.sign||'?'}
 
-TARZ: Kişinin kendi haritasına özgü yorumlar yap. Hem güçlü hem zorlu yanları söyle. Kader kesinliği iddia etme. Haritadaki gerçek konumlara atıf yap. 3-5 cümle, derin ve doğal ses.`;
+═══ BUGÜNÜN GÖKYÜZÜ ═══
+Tarih: ${today}
+Ay Evresi: ${phase.name}
+Güncel Transitler: ${todayTransits}
+
+═══ KİŞİLİK PROFİLİ ═══
+Güneş (${s.sun}): Temel kimlik — ${SIGN_TRAITS[s.sun]?.str||'güçlü irade'}. Zorluk: ${SIGN_TRAITS[s.sun]?.ch||'gelişim alanı'}.
+Ay (${s.moon}): Duygusal yapı — ${SIGN_TRAITS[s.moon]?.str||'derin sezgi'}. Zorluk: ${SIGN_TRAITS[s.moon]?.ch||'duygusal alan'}.
+Yükselen (${s.asc}): Dünyaya yansıma — ${SIGN_TRAITS[s.asc]?.str||'güçlü varlık'}. Element: ${SIGN_TRAITS[s.asc]?.el||'?'}.
+
+═══ GÖREV & KURALLAR ═══
+1. YAPI: Her yanıtı şu başlıklarla yapılandır (Markdown kullan):
+   **🌌 Kozmik Durum** — Haritadaki ilgili gezegen/transit analizi
+   **✨ Güçlü Potansiyelin** — Avantajlar ve fırsatlar
+   **⚠️ Dikkat & Gelişim** — Zorluklar ve gelişim alanları
+   **🎯 Eyleme Geçilebilir Tavsiye** — Somut, uygulanabilir bir adım
+   Son olarak sohbeti sürdürecek tek açık uçlu soru.
+
+2. DİL: Gizemli, empatik, modern, koçluk dili. "Olacak" değil "olabilir/bu enerji aktif". Falcılık değil rehberlik.
+
+3. DERİNLİK: Minimum 4-6 paragraf. Yüzeysel tek cümle yanıtlar yasak. Haritadaki gerçek konumlara atıf yap (burç + derece).
+
+4. KİŞİSELLEŞTİRME: ${s.name}'e ismiyle hitap et. Genel burç yorumu değil, bu kişinin özgün haritasına özel yorum.
+
+5. DÜRÜSTLÜK: Sadece pozitif söyleme. Güçlü ve zorlu yanları dengeli anlat. Kader kesinliği iddia etme.
+
+6. FORMAT: Bold başlıklar, emoji, maddeler kullan. Metin duvarı oluşturma.`;
 
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
@@ -1382,6 +1424,72 @@ function showPage(id){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
   if(id==='chart'&&APP.state)requestAnimationFrame(()=>buildChart(APP.state));
 }
+
+// ═══════════════════════════════════════════════
+// CITY AUTOCOMPLETE (OpenStreetMap Nominatim — ücretsiz)
+// ═══════════════════════════════════════════════
+(function(){
+  const input=document.getElementById('inp-city');
+  const dropdown=document.getElementById('city-dropdown');
+  const status=document.getElementById('city-status');
+  const latInput=document.getElementById('inp-lat');
+  const lonInput=document.getElementById('inp-lon');
+  let debounceTimer=null;
+  let selectedFromList=false;
+
+  if(!input)return;
+
+  input.addEventListener('input',function(){
+    selectedFromList=false;
+    latInput.value='';lonInput.value='';
+    const q=this.value.trim();
+    clearTimeout(debounceTimer);
+    if(q.length<2){dropdown.style.display='none';status.textContent='';return;}
+    status.textContent='🔍 Aranıyor...';
+    debounceTimer=setTimeout(()=>searchCity(q),400);
+  });
+
+  input.addEventListener('blur',function(){
+    setTimeout(()=>{dropdown.style.display='none';},200);
+    if(!selectedFromList&&latInput.value===''){
+      status.textContent=latInput.value?'':'⚠️ Listeden bir şehir seç — hassas hesaplama için gerekli.';
+    }
+  });
+
+  async function searchCity(q){
+    try{
+      const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1&accept-language=tr`;
+      const res=await fetch(url,{headers:{'Accept-Language':'tr','User-Agent':'VelumAstrology/1.0'}});
+      const data=await res.json();
+      if(!data.length){status.textContent='Şehir bulunamadı.';dropdown.style.display='none';return;}
+      status.textContent='';
+      dropdown.innerHTML=data.map(d=>{
+        const city=d.address?.city||d.address?.town||d.address?.village||d.address?.county||d.name;
+        const country=d.address?.country||'';
+        const state=d.address?.state||'';
+        const label=city+(state&&state!==city?', '+state:'')+', '+country;
+        return`<li data-lat="${d.lat}" data-lon="${d.lon}" data-label="${label}">
+          ${city}<span>${state?state+', ':''} ${country} · ${parseFloat(d.lat).toFixed(2)}°N ${parseFloat(d.lon).toFixed(2)}°E</span>
+        </li>`;
+      }).join('');
+      dropdown.style.display='block';
+      dropdown.querySelectorAll('li').forEach(li=>{
+        li.addEventListener('mousedown',function(e){
+          e.preventDefault();
+          input.value=this.dataset.label;
+          latInput.value=this.dataset.lat;
+          lonInput.value=this.dataset.lon;
+          selectedFromList=true;
+          dropdown.style.display='none';
+          status.innerHTML=`✓ <span style="color:var(--teal);">${parseFloat(this.dataset.lat).toFixed(4)}°N, ${parseFloat(this.dataset.lon).toFixed(4)}°E</span> — Konum doğrulandı`;
+        });
+      });
+    }catch(err){
+      status.textContent='Bağlantı hatası — şehri manuel girebilirsin.';
+      dropdown.style.display='none';
+    }
+  }
+})();
 
 // ═══════════════════════════════════════════════
 // PERSISTENCE
