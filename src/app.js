@@ -57,6 +57,10 @@ function createChart() {
     planets,
   };
 
+  // Groq key'i sessionStorage'a kaydet (sekme kapanınca silinir)
+  const apiKey = document.getElementById('inp-apikey')?.value.trim();
+  if (apiKey) sessionStorage.setItem('velum_groq_key', apiKey);
+
   // Persist to localStorage
   saveState(APP.state);
 
