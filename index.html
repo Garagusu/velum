@@ -650,9 +650,9 @@ nav{
     <button class="f-tab" id="sky-tab-birth" onclick="switchSkyTab('birth',this)">⭐ Doğum Anın</button>
   </div>
 
-  <div style="background:var(--card);border:.5px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:1rem;">
-    <div id="velum-sky-now" style="width:100%;height:420px;"></div>
-    <div id="velum-sky-birth" style="width:100%;height:420px;display:none;"></div>
+  <div style="background:#050410;border:.5px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:1rem;position:relative;">
+    <div id="velum-sky-now" style="width:100%;height:70dvh;min-height:400px;"></div>
+    <div id="velum-sky-birth" style="width:100%;height:70dvh;min-height:400px;display:none;"></div>
   </div>
 
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;" id="sky-planet-cards"></div>
@@ -679,11 +679,9 @@ nav{
 <div id="page-planets" class="page planet-showcase">
   <div class="greeting-small" style="margin-bottom:1rem;letter-spacing:2px;">✦ GEZEGENLER</div>
 
-  <!-- Hero image -->
-  <div class="planet-hero" id="planet-hero" onclick="void(0)">
-    <img id="planet-hero-img" class="planet-hero-img"
-      src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Colour_of_the_Sun.jpg/800px-Colour_of_the_Sun.jpg"
-      alt="Güneş" loading="lazy"/>
+  <!-- Hero canvas -->
+  <div class="planet-hero" id="planet-hero">
+    <canvas id="planet-hero-canvas" style="width:100%;height:100%;display:block;"></canvas>
     <div class="planet-hero-overlay">
       <div class="planet-hero-sym" id="planet-hero-sym" style="color:#f0c040;">☉</div>
       <div class="planet-hero-name" id="planet-hero-name" style="color:#f0c040;">GÜNEŞ</div>
@@ -1986,13 +1984,31 @@ function buildPlanetsPage(s){
   ];
 
   strip.innerHTML=allPlanets.map(p=>{
-    const pd=PLANET_IMAGES[p.key];
+    const pd=PLANET_DATA[p.key];
     if(!pd)return'';
     return`<div class="planet-thumb ${p.key===activePlanetKey?'active':''}" data-key="${p.key}" onclick="selectPlanet('${p.key}',APP.state)">
-      <img src="${pd.img}" alt="${pd.label}" loading="lazy" onerror="this.style.background='#${Math.floor(Math.random()*0x444+0x222).toString(16).padStart(6,0)}'"/>
-      <div class="planet-thumb-label">${pd.sym} ${pd.label.slice(0,3)}</div>
+      <canvas id="thumb-${p.key}" width="72" height="72" style="display:block;border-radius:8px;"></canvas>
+      <div class="planet-thumb-label">${pd.sym} ${pd.label.slice(0,4)}</div>
     </div>`;
   }).join('');
+  // Draw thumbnails after DOM update
+  requestAnimationFrame(()=>{
+    allPlanets.forEach(p=>{
+      const pd=PLANET_DATA[p.key];
+      if(!pd)return;
+      const tc=document.getElementById('thumb-'+p.key);
+      if(!tc)return;
+      const tx=tc.getContext('2d');
+      tx.fillStyle='#0a0820';
+      tx.beginPath();tx.arc(36,36,36,0,Math.PI*2);tx.fill();
+      // Space bg dots
+      for(let i=0;i<20;i++){
+        tx.fillStyle=`rgba(200,210,255,${Math.random()*.4+.05})`;
+        tx.beginPath();tx.arc(Math.random()*72,Math.random()*72,.8+Math.random()*.8,0,Math.PI*2);tx.fill();
+      }
+      pd.draw(tx,36,36,20);
+    });
+  });
 
   selectPlanet('sun',s);
 }
@@ -2001,7 +2017,7 @@ function selectPlanet(key,s){
   activePlanetKey=key;
   document.querySelectorAll('.planet-thumb').forEach(t=>t.classList.toggle('active',t.dataset.key===key));
 
-  const pd=PLANET_IMAGES[key];
+  const pd=PLANET_DATA[key];
   if(!pd)return;
 
   const planetData=key==='sun'?{sign:s.sun,deg:s.sunDeg}:
@@ -2010,9 +2026,57 @@ function selectPlanet(key,s){
 
   const signTrait=SIGN_TRAITS[planetData.sign]||{};
 
-  // Hero
-  document.getElementById('planet-hero-img').src=pd.img;
-  document.getElementById('planet-hero-img').alt=pd.label;
+  // Hero canvas
+  const heroCanvas=document.getElementById('planet-hero-canvas');
+  if(heroCanvas){
+    const heroEl=document.getElementById('planet-hero');
+    const hw=heroEl.offsetWidth||800;
+    const hh=heroEl.offsetHeight||400;
+    heroCanvas.width=hw;heroCanvas.height=hh;
+    const hctx=heroCanvas.getContext('2d');
+    // Deep space background
+    hctx.fillStyle='#050410';
+    hctx.fillRect(0,0,hw,hh);
+    // Stars
+    for(let i=0;i<200;i++){
+      const sx=Math.random()*hw,sy=Math.random()*hh;
+      const sr=Math.random()*1.2+.2;
+      hctx.fillStyle=`rgba(220,230,255,${Math.random()*.6+.1})`;
+      hctx.beginPath();hctx.arc(sx,sy,sr,0,Math.PI*2);hctx.fill();
+    }
+    // Nebula glow
+    const ng=hctx.createRadialGradient(hw*.5,hh*.5,0,hw*.5,hh*.5,hw*.5);
+    ng.addColorStop(0,pd.color+'18');ng.addColorStop(1,'transparent');
+    hctx.fillStyle=ng;hctx.fillRect(0,0,hw,hh);
+    // Planet — large and centered with subtle rotation animation
+    const pr=Math.min(hw,hh)*0.38;
+    if(APP._planetAnimFrame) cancelAnimationFrame(APP._planetAnimFrame);
+    let angle=0;
+    function animatePlanet(){
+      hctx.clearRect(0,0,hw,hh);
+      hctx.fillStyle='#050410';hctx.fillRect(0,0,hw,hh);
+      // Stars
+      if(!APP._heroStars){
+        APP._heroStars=Array.from({length:200},()=>({x:Math.random()*hw,y:Math.random()*hh,r:Math.random()*1.2+.2,o:Math.random()*.6+.1,s:Math.random()*.003+.001,t:Math.random()*Math.PI*2}));
+      }
+      APP._heroStars.forEach(st=>{st.t+=st.s;const o=st.o*(0.5+0.5*Math.sin(st.t));hctx.fillStyle=`rgba(220,230,255,${o})`;hctx.beginPath();hctx.arc(st.x,st.y,st.r,0,Math.PI*2);hctx.fill();});
+      const ng=hctx.createRadialGradient(hw*.5,hh*.5,0,hw*.5,hh*.5,hw*.5);
+      ng.addColorStop(0,pd.color+'18');ng.addColorStop(1,'transparent');
+      hctx.fillStyle=ng;hctx.fillRect(0,0,hw,hh);
+      // Orbit ring
+      hctx.beginPath();hctx.ellipse(hw*.5,hh*.52,pr*1.7,pr*.4,0,0,Math.PI*2);
+      hctx.strokeStyle=pd.color+'22';hctx.lineWidth=1;hctx.setLineDash([4,8]);hctx.stroke();hctx.setLineDash([]);
+      // Small moon/dot on orbit
+      const mx=hw*.5+pr*1.7*Math.cos(angle),my=hh*.52+pr*.4*Math.sin(angle);
+      hctx.beginPath();hctx.arc(mx,my,4,0,Math.PI*2);
+      hctx.fillStyle=pd.color+'88';hctx.fill();
+      angle+=.005;
+      pd.draw(hctx,hw*.5,hh*.52,pr);
+      APP._planetAnimFrame=requestAnimationFrame(animatePlanet);
+    }
+    APP._heroStars=null;
+    animatePlanet();
+  }
   document.getElementById('planet-hero-sym').textContent=pd.sym;
   document.getElementById('planet-hero-sym').style.color=pd.color;
   document.getElementById('planet-hero-name').textContent=pd.label;
@@ -2106,7 +2170,8 @@ function initSkyMap(state){
   // Container mutlaka visible ve boyutlu olmalı
   nowEl.style.display='block';
   const W=nowEl.offsetWidth||window.innerWidth||800;
-  const H=Math.max(380, Math.floor(W*0.52));
+  // Height: 70dvh capped
+  const H=Math.max(400, Math.min(Math.floor(window.innerHeight*0.70), 700));
   nowEl.style.height=H+'px';
   birthEl.style.height=H+'px';
 
@@ -2116,6 +2181,7 @@ function initSkyMap(state){
     projection:'stereo',
     constellations:true,
     constellationlabels:true,
+    constellationwidth:1.5,
     showstarlabels:true,
     showplanets:true,
     showplanetlabels:true,
@@ -2125,11 +2191,17 @@ function initSkyMap(state){
     mouse:true,
     keyboard:true,
     gradient:true,
-    magnitude:5.8,
+    magnitude:6.0,
     credit:false,
     lang:'en',
-    color:'rgba(196,181,253,0.85)',
+    color:'rgba(196,181,253,0.9)',
     background:'rgba(5,4,15,1)',
+    file:{
+      stars:'stars.json',
+      constellations:'lines_latin.json',
+      planets:'virtualsky-planets.js',
+      showers:'showers.json',
+    },
   };
 
   // Anlık gökyüzü
