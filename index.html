@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VELUM — Kişisel Astroloji Platformu</title>
+  <link rel="stylesheet" href="src/styles/main.css" />
+  <link rel="stylesheet" href="src/styles/chart.css" />
+  <link rel="stylesheet" href="src/styles/chat.css" />
+  <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+
+  <div class="app" id="app">
+    <div class="stars-bg"></div>
+    <div class="content">
+
+      <!-- ═══════════════════════════════════════
+           NAVIGATION
+      ═══════════════════════════════════════ -->
+      <nav id="main-nav" class="hidden">
+        <div class="nav-logo">
+          <span class="logo-symbol">✦</span>
+          <span class="logo-text">VELUM</span>
+        </div>
+        <div class="nav-tabs">
+          <button class="nav-tab active" data-page="dashboard">Ana Sayfa</button>
+          <button class="nav-tab" data-page="chart">Haritam</button>
+          <button class="nav-tab" data-page="forecast">Öngörüler</button>
+          <button class="nav-tab" data-page="chat">Astrolog AI</button>
+          <button class="nav-tab" data-page="profile">Profil</button>
+        </div>
+        <div class="nav-user" id="nav-user-avatar">✦</div>
+      </nav>
+
+      <!-- ═══════════════════════════════════════
+           PAGE: ONBOARDING
+      ═══════════════════════════════════════ -->
+      <div id="page-onboarding" class="page active">
+        <div class="onboarding">
+          <div class="onboard-orb">✦</div>
+          <h1 class="onboard-title">A S T R U M</h1>
+          <p class="onboard-sub">Kozmosun haritanı çıkar. Gezegenler sana ne söylüyor?</p>
+
+          <div class="form-card">
+            <p class="form-title">✦ Doğum Bilgilerini Gir</p>
+
+            <div class="form-group">
+              <label class="form-label" for="inp-name">Adın</label>
+              <input class="form-input" id="inp-name" type="text" placeholder="Adını gir..." autocomplete="given-name" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="inp-date">Doğum Tarihi</label>
+              <input class="form-input" id="inp-date" type="date" value="1993-05-15" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="inp-time">Doğum Saati</label>
+                <input class="form-input" id="inp-time" type="time" value="14:30" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-city">Doğum Yeri</label>
+                <input class="form-input" id="inp-city" type="text" placeholder="İstanbul..." />
+              </div>
+            </div>
+
+            <button class="btn-cosmic" id="create-chart-btn">✦ Haritamı Oluştur</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           PAGE: DASHBOARD
+      ═══════════════════════════════════════ -->
+      <div id="page-dashboard" class="page">
+        <div class="greeting">
+          <div class="greeting-small">Hoş geldin</div>
+          <div class="greeting-name" id="dash-name">✦</div>
+        </div>
+
+        <div class="today-banner">
+          <div class="today-label">✦ Bugünün Kozmik Enerjisi</div>
+          <div class="today-title" id="today-title"></div>
+          <div class="today-text" id="today-text"></div>
+          <div class="planet-pills" id="today-pills"></div>
+        </div>
+
+        <div class="cards-grid">
+          <div class="cosmic-card" data-navigate="chart">
+            <div class="card-icon" id="sun-icon">♉</div>
+            <div class="card-label">Güneş Burcu</div>
+            <div class="card-value" id="sun-card">—</div>
+            <div class="card-sub" id="sun-deg">—</div>
+          </div>
+          <div class="cosmic-card" data-navigate="chart">
+            <div class="card-icon" id="moon-icon">♓</div>
+            <div class="card-label">Ay Burcu</div>
+            <div class="card-value" id="moon-card">—</div>
+            <div class="card-sub" id="moon-deg">—</div>
+          </div>
+          <div class="cosmic-card" data-navigate="chart">
+            <div class="card-icon" id="asc-icon">♑</div>
+            <div class="card-label">Yükselen</div>
+            <div class="card-value" id="asc-card">—</div>
+            <div class="card-sub" id="asc-deg">—</div>
+          </div>
+          <div class="cosmic-card" data-navigate="forecast">
+            <div class="card-icon">⊙</div>
+            <div class="card-label">Aktif Transit</div>
+            <div class="card-value" id="active-transit" style="font-size:15px;">—</div>
+            <div class="card-sub" id="active-transit-sub">—</div>
+          </div>
+        </div>
+
+        <div class="section-title">✦ Güncel Gezegenler</div>
+        <div class="transit-list" id="transit-list"></div>
+
+        <div class="section-title">✦ Bu Hafta</div>
+        <div class="forecast-section">
+          <div class="f-text" id="weekly-text"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           PAGE: BIRTH CHART
+      ═══════════════════════════════════════ -->
+      <div id="page-chart" class="page">
+        <div class="greeting-small page-eyebrow">✦ DOĞUM HARİTAN</div>
+        <div class="chart-wrapper">
+          <canvas id="birth-chart" width="480" height="480"></canvas>
+        </div>
+        <div class="section-title" style="margin-top:1.5rem;">✦ Gezegen Pozisyonları</div>
+        <div class="planets-grid" id="planets-grid"></div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           PAGE: FORECASTS
+      ═══════════════════════════════════════ -->
+      <div id="page-forecast" class="page">
+        <div class="greeting-small page-eyebrow">✦ ÖNGÖRÜLER</div>
+
+        <div class="forecast-tabs">
+          <button class="f-tab active" data-forecast="daily">Bugün</button>
+          <button class="f-tab" data-forecast="weekly">Haftalık</button>
+          <button class="f-tab" data-forecast="monthly">Aylık</button>
+          <button class="f-tab" data-forecast="upcoming">Dönemler</button>
+        </div>
+
+        <!-- Daily -->
+        <div id="forecast-daily" class="forecast-content active">
+          <div class="forecast-section">
+            <div class="f-section-title">☉ Güneş Enerjisi</div>
+            <div class="f-text" id="f-sun-text"></div>
+            <div class="energy-bar">
+              <div class="energy-label"><span>Güç</span><span id="f-sun-pct">—</span></div>
+              <div class="energy-track"><div class="energy-fill gold" id="f-sun-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="forecast-section">
+            <div class="f-section-title">☽ Ay Enerjisi</div>
+            <div class="f-text" id="f-moon-text"></div>
+            <div class="energy-bar">
+              <div class="energy-label"><span>Duygu Akışı</span><span id="f-moon-pct">—</span></div>
+              <div class="energy-track"><div class="energy-fill purple" id="f-moon-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="forecast-section">
+            <div class="f-section-title">☿ Merkür Enerjisi</div>
+            <div class="f-text" id="f-merc-text"></div>
+            <div class="energy-bar">
+              <div class="energy-label"><span>İletişim</span><span id="f-merc-pct">—</span></div>
+              <div class="energy-track"><div class="energy-fill teal" id="f-merc-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly -->
+        <div id="forecast-weekly" class="forecast-content">
+          <div class="forecast-section">
+            <div class="f-section-title">✦ Haftalık Analiz</div>
+            <div class="f-text" id="f-weekly-main"></div>
+          </div>
+          <div class="forecast-section">
+            <div class="f-section-title">⚡ Dikkat Edilecekler</div>
+            <div class="f-text" id="f-weekly-warn"></div>
+          </div>
+        </div>
+
+        <!-- Monthly -->
+        <div id="forecast-monthly" class="forecast-content">
+          <div class="forecast-section">
+            <div class="f-section-title">✦ Aylık Genel Bakış</div>
+            <div class="f-text" id="f-monthly-main"></div>
+          </div>
+          <div class="forecast-section">
+            <div class="f-section-title">📅 Önemli Günler</div>
+            <div class="timeline-list" id="f-monthly-dates"></div>
+          </div>
+        </div>
+
+        <!-- Upcoming -->
+        <div id="forecast-upcoming" class="forecast-content">
+          <div class="forecast-section">
+            <div class="f-section-title">✦ Önümüzdeki Büyük Dönemler</div>
+            <div class="f-text" id="f-upcoming-intro"></div>
+            <div class="timeline-list" id="f-upcoming-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           PAGE: AI CHAT
+      ═══════════════════════════════════════ -->
+      <div id="page-chat" class="page">
+        <div class="chat-container">
+          <div class="chat-header">
+            <div class="chat-avatar">✦</div>
+            <div>
+              <div class="chat-name">Velum AI Astrolog</div>
+              <div class="chat-status">● Haritanı biliyor · Çevrimiçi</div>
+            </div>
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <div class="msg astrologer">
+              <div class="msg-bubble" id="ai-intro">Merhaba! Doğum haritanı oluşturduktan sonra burada sohbet edebiliriz.</div>
+              <div class="msg-time">Az önce</div>
+            </div>
+          </div>
+
+          <div class="quick-questions" id="quick-questions">
+            <button class="quick-q" data-question="Sevgi ve ilişkiler hakkında haritam ne söylüyor?">💕 Aşk</button>
+            <button class="quick-q" data-question="Kariyer ve para konusunda haritam ne gösteriyor?">💼 Kariyer</button>
+            <button class="quick-q" data-question="Bu ay benim için nasıl geçecek?">📅 Bu Ay</button>
+            <button class="quick-q" data-question="Güçlü ve zorlu yanlarım neler?">⚡ Güçlü Yanlarım</button>
+          </div>
+
+          <div class="chat-input-area">
+            <textarea
+              class="chat-input"
+              id="chat-input"
+              rows="1"
+              placeholder="Haritanla ilgili bir şey sor..."
+            ></textarea>
+            <button class="chat-send" id="chat-send-btn" aria-label="Gönder">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           PAGE: PROFILE
+      ═══════════════════════════════════════ -->
+      <div id="page-profile" class="page">
+        <div class="profile-header">
+          <div class="profile-avatar">✦</div>
+          <div class="profile-name" id="prof-name">—</div>
+          <div class="profile-signs" id="prof-signs">—</div>
+          <div class="sign-trio" id="sign-trio"></div>
+        </div>
+
+        <div class="premium-banner">
+          <div class="premium-title">✦ Premium Üyeliğe Geç</div>
+          <div class="premium-text">PDF doğum haritası raporu, sınırsız AI astrolog sohbeti, detaylı yıllık öngörüler ve kişisel transit takip sistemi.</div>
+          <button class="btn-gold">Premium'a Yükselt →</button>
+        </div>
+
+        <div class="section-title" style="margin-top:1.5rem;">✦ Ayarlar</div>
+        <div class="settings-list">
+          <div class="setting-item" id="btn-edit-birth">
+            <div class="setting-left">
+              <div class="setting-icon">✦</div>
+              <div>
+                <div class="setting-label">Doğum Bilgilerini Düzenle</div>
+                <div class="setting-sub">Harita bilgilerini güncelle</div>
+              </div>
+            </div>
+            <div class="setting-chevron">›</div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">🔔</div>
+              <div>
+                <div class="setting-label">Bildirimler</div>
+                <div class="setting-sub">Günlük transit hatırlatmaları</div>
+              </div>
+            </div>
+            <div class="setting-chevron">›</div>
+          </div>
+          <div class="setting-item" id="btn-download-pdf">
+            <div class="setting-left">
+              <div class="setting-icon">📄</div>
+              <div>
+                <div class="setting-label">PDF Rapor İndir</div>
+                <div class="setting-sub">Premium özelliği</div>
+              </div>
+            </div>
+            <div class="setting-chevron">›</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /app -->
+
+  <!-- Scripts -->
+  <script src="src/utils/astro.js"></script>
+  <script src="src/utils/content.js"></script>
+  <script src="src/components/stars.js"></script>
+  <script src="src/components/chart.js"></script>
+  <script src="src/components/chat.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
