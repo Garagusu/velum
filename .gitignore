@@ -1,0 +1,13 @@
+# API keys — asla GitHub'a gitmesin
+config.js
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
