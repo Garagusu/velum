@@ -78,6 +78,61 @@ nav{
 .form-input[type="date"],.form-input[type="time"]{color-scheme:dark;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .form-hint{font-size:11px;color:var(--dim2);margin-top:5px;}
+/* ── PLANETS SHOWCASE ── */
+.planet-showcase{background:var(--bg);min-height:100dvh;}
+.planet-hero{
+  position:relative;width:100%;height:55dvh;min-height:320px;
+  overflow:hidden;cursor:pointer;
+  border-radius:var(--r2);margin-bottom:1rem;
+}
+.planet-hero-img{
+  width:100%;height:100%;object-fit:cover;object-position:center;
+  transition:transform 6s ease;filter:brightness(.85) saturate(1.2);
+}
+.planet-hero:hover .planet-hero-img{transform:scale(1.04);}
+.planet-hero-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(5,4,15,.95) 0%,rgba(5,4,15,.3) 50%,transparent 100%);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:1.75rem;
+}
+.planet-hero-sym{font-size:52px;line-height:1;margin-bottom:.5rem;filter:drop-shadow(0 0 20px currentColor);}
+.planet-hero-name{font-size:32px;font-weight:700;letter-spacing:2px;margin-bottom:.25rem;}
+.planet-hero-sub{font-size:14px;color:var(--dim);letter-spacing:1px;}
+.planet-hero-sign{
+  position:absolute;top:1.25rem;right:1.25rem;
+  background:rgba(5,4,15,.7);backdrop-filter:blur(10px);
+  border:.5px solid var(--border2);border-radius:20px;
+  padding:.4rem 1rem;font-size:13px;color:var(--purple3);
+}
+.planet-strip{
+  display:flex;gap:10px;overflow-x:auto;padding-bottom:.5rem;
+  scrollbar-width:none;margin-bottom:1.5rem;
+}
+.planet-strip::-webkit-scrollbar{display:none;}
+.planet-thumb{
+  flex-shrink:0;width:72px;cursor:pointer;
+  border-radius:var(--r);overflow:hidden;
+  border:2px solid transparent;transition:all .2s;
+}
+.planet-thumb:hover,.planet-thumb.active{border-color:var(--purple2);}
+.planet-thumb img{width:72px;height:72px;object-fit:cover;display:block;filter:brightness(.8);}
+.planet-thumb-label{text-align:center;font-size:10px;color:var(--dim);padding:4px 2px;}
+.planet-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.planet-info-card{
+  background:var(--card);border:.5px solid var(--border);
+  border-radius:var(--r);padding:1rem;
+}
+.planet-info-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem;}
+.planet-info-value{font-size:15px;color:var(--silver);}
+.planet-info-sub{font-size:11px;color:var(--dim2);margin-top:2px;}
+@media(max-width:600px){
+  .planet-hero{height:42dvh;min-height:260px;}
+  .planet-hero-name{font-size:24px;}
+  .planet-hero-sym{font-size:38px;}
+  .planet-info-grid{grid-template-columns:1fr 1fr;}
+}
+
 #city-dropdown li{padding:9px 14px;font-size:13px;color:var(--silver);cursor:pointer;border-bottom:.5px solid var(--border);transition:background .15s;}
 #city-dropdown li:last-child{border-bottom:none;}
 #city-dropdown li:hover{background:rgba(139,92,246,.15);}
@@ -303,6 +358,7 @@ nav{
     <button class="nav-tab" data-page="synastry">Aşk & Uyum</button>
     <button class="nav-tab" data-page="personality">Kişilik</button>
     <button class="nav-tab" data-page="career">Kariyer</button>
+    <button class="nav-tab" data-page="planets">Gezegenler</button>
     <button class="nav-tab" data-page="skymap">Gökyüzü</button>
     <button class="nav-tab" data-page="chat">Astrolog AI</button>
     <button class="nav-tab" data-page="profile">Profil</button>
@@ -615,6 +671,47 @@ nav{
       <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">8</kbd> Şu ana dön</div>
       <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">g</kbd> Izgara çizgileri</div>
       <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">?</kbd> Tüm kısayollar</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PLANETS ═══ -->
+<div id="page-planets" class="page planet-showcase">
+  <div class="greeting-small" style="margin-bottom:1rem;letter-spacing:2px;">✦ GEZEGENLER</div>
+
+  <!-- Hero image -->
+  <div class="planet-hero" id="planet-hero" onclick="void(0)">
+    <img id="planet-hero-img" class="planet-hero-img"
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Colour_of_the_Sun.jpg/800px-Colour_of_the_Sun.jpg"
+      alt="Güneş" loading="lazy"/>
+    <div class="planet-hero-overlay">
+      <div class="planet-hero-sym" id="planet-hero-sym" style="color:#f0c040;">☉</div>
+      <div class="planet-hero-name" id="planet-hero-name" style="color:#f0c040;">GÜNEŞ</div>
+      <div class="planet-hero-sub" id="planet-hero-sub">Boğa · 15° · Kimlik & Ego</div>
+    </div>
+    <div class="planet-hero-sign" id="planet-hero-sign">♉ Boğa</div>
+  </div>
+
+  <!-- Thumbnail strip -->
+  <div class="planet-strip" id="planet-strip"></div>
+
+  <!-- Info grid -->
+  <div class="planet-info-grid" id="planet-info-grid"></div>
+
+  <!-- Deep analysis -->
+  <div class="f-card" id="planet-analysis-card">
+    <div class="f-card-title" id="planet-analysis-title">☉ Güneş Analizi</div>
+    <div class="f-text" id="planet-analysis-text"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+    <div class="f-card">
+      <div class="f-card-title" style="color:var(--teal);">💚 Güçlü Yönler</div>
+      <div id="planet-strengths" style="margin-top:.5rem;"></div>
+    </div>
+    <div class="f-card">
+      <div class="f-card-title" style="color:var(--pink);">⚡ Zorluklar</div>
+      <div id="planet-challenges" style="margin-top:.5rem;"></div>
     </div>
   </div>
 </div>
@@ -1068,6 +1165,7 @@ function buildAll(){
   buildCareer(s);
   buildSynastryPreFill(s);
   initChat(s);
+  buildPlanetsPage(s);
   // SkyMap is initialized lazily on first visit
 }
 
@@ -1790,6 +1888,7 @@ function showPage(id){
   document.getElementById('page-'+id)?.classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
   if(id==='chart'&&APP.state)requestAnimationFrame(()=>buildChart(APP.state));
+  if(id==='planets'&&APP.state) buildPlanetsPage(APP.state);
   if(id==='skymap'&&APP.state){
     requestAnimationFrame(()=>{
       if(!skyNow) initSkyMap(APP.state);
@@ -1798,40 +1897,238 @@ function showPage(id){
 }
 
 // ═══════════════════════════════════════════════
+// PLANETS SHOWCASE
+// Gerçek NASA/Wikimedia görüntüleri
+// ═══════════════════════════════════════════════
+const PLANET_IMAGES={
+  sun:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/600px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg',
+    color:'#f0c040',sym:'☉',label:'GÜNEŞ',
+    diameter:'1,392,700 km',distance:'149.6M km',
+    fact:'Güneş sistemimizdeki kütlenin %99.86\'sını oluşturur.',
+    astro:'Kimlik, ego ve yaşam amacı',
+  },
+  moon:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/600px-FullMoon2010.jpg',
+    color:'#dce8f8',sym:'☽',label:'AY',
+    diameter:'3,474 km',distance:'384,400 km',
+    fact:'Dünya\'nın tek doğal uydusu, gel-git hareketlerini kontrol eder.',
+    astro:'Duygular, sezgi ve içgüdüsel tepkiler',
+  },
+  mercury:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Mercury_in_true_color.jpg/600px-Mercury_in_true_color.jpg',
+    color:'#5eefc8',sym:'☿',label:'MERKÜR',
+    diameter:'4,879 km',distance:'77.3M km',
+    fact:'Güneş sisteminin en küçük ve en hızlı gezegende; bir yılı 88 gün.',
+    astro:'Zihin, iletişim ve düşünce biçimi',
+  },
+  venus:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Venus-real_color.jpg/600px-Venus-real_color.jpg',
+    color:'#f8a4d0',sym:'♀',label:'VENÜS',
+    diameter:'12,104 km',distance:'261M km',
+    fact:'Atmosferindeki yoğun CO₂ bulutu yüzünden en sıcak gezegen (462°C).',
+    astro:'Aşk, güzellik, değerler ve para',
+  },
+  mars:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/600px-OSIRIS_Mars_true_color.jpg',
+    color:'#f87070',sym:'♂',label:'MARS',
+    diameter:'6,779 km',distance:'225M km',
+    fact:'Demir oksit (pas) yüzünden kırmızı görünür. Olympus Mons, Güneş sisteminin en yüksek dağıdır.',
+    astro:'Eylem, enerji, cesaret ve arzular',
+  },
+  jupiter:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Jupiter_and_its_shrunken_Great_Red_Spot.jpg/600px-Jupiter_and_its_shrunken_Great_Red_Spot.jpg',
+    color:'#8fef9f',sym:'♃',label:'JÜPİTER',
+    diameter:'139,820 km',distance:'778.5M km',
+    fact:'Güneş sisteminin en büyük gezegende. Büyük Kırmızı Leke, 350 yıldır süren fırtına.',
+    astro:'Şans, genişleme, bilgelik ve büyüme',
+  },
+  saturn:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Saturn_during_Equinox.jpg/600px-Saturn_during_Equinox.jpg',
+    color:'#fce070',sym:'♄',label:'SATÜRN',
+    diameter:'116,460 km',distance:'1.43B km',
+    fact:'Halkaları buzdan ve kayadan oluşan milyonlarca parçacıktan meydana gelir.',
+    astro:'Disiplin, sorumluluk, kısıtlamalar ve dersler',
+  },
+  uranus:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Uranus2.jpg/600px-Uranus2.jpg',
+    color:'#7fd8f0',sym:'⛢',label:'URANÜS',
+    diameter:'50,724 km',distance:'2.87B km',
+    fact:'Yatay eksende döner — güneş ışığını kutuplarından alır, yanlarından değil.',
+    astro:'Özgünlük, devrim, ani değişimler',
+  },
+  neptune:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Neptune_-_Voyager_2_%2829347980845%29_flatten_crop.jpg/600px-Neptune_-_Voyager_2_%2829347980845%29_flatten_crop.jpg',
+    color:'#c0b0ff',sym:'♆',label:'NEPTÜN',
+    diameter:'49,244 km',distance:'4.5B km',
+    fact:'Güneş sisteminin en güçlü rüzgarlarına ev sahipliği yapar (2,100 km/s).',
+    astro:'Hayaller, spiritüellik, yanılsamalar',
+  },
+  pluto:{
+    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Pluto_in_True_Color_-_High-Res.jpg/600px-Pluto_in_True_Color_-_High-Res.jpg',
+    color:'#ffc88a',sym:'♇',label:'PLÜTON',
+    diameter:'2,376 km',distance:'5.9B km',
+    fact:'2006\'da cüce gezegen olarak yeniden sınıflandırıldı. Kalp şeklinde azot buz ovaları içerir.',
+    astro:'Dönüşüm, güç, yeniden doğuş',
+  },
+};
+
+let activePlanetKey='sun';
+
+function buildPlanetsPage(s){
+  const strip=document.getElementById('planet-strip');
+  if(!strip)return;
+
+  const allPlanets=[
+    {key:'sun', sign:s.sun, deg:s.sunDeg},
+    {key:'moon',sign:s.moon,deg:s.moonDeg},
+    ...(s.planets||[]).map(p=>({key:p.key,sign:p.sign,deg:p.deg})),
+  ];
+
+  strip.innerHTML=allPlanets.map(p=>{
+    const pd=PLANET_IMAGES[p.key];
+    if(!pd)return'';
+    return`<div class="planet-thumb ${p.key===activePlanetKey?'active':''}" data-key="${p.key}" onclick="selectPlanet('${p.key}',APP.state)">
+      <img src="${pd.img}" alt="${pd.label}" loading="lazy" onerror="this.style.background='#${Math.floor(Math.random()*0x444+0x222).toString(16).padStart(6,0)}'"/>
+      <div class="planet-thumb-label">${pd.sym} ${pd.label.slice(0,3)}</div>
+    </div>`;
+  }).join('');
+
+  selectPlanet('sun',s);
+}
+
+function selectPlanet(key,s){
+  activePlanetKey=key;
+  document.querySelectorAll('.planet-thumb').forEach(t=>t.classList.toggle('active',t.dataset.key===key));
+
+  const pd=PLANET_IMAGES[key];
+  if(!pd)return;
+
+  const planetData=key==='sun'?{sign:s.sun,deg:s.sunDeg}:
+    key==='moon'?{sign:s.moon,deg:s.moonDeg}:
+    (s.planets||[]).find(p=>p.key===key)||{sign:'?',deg:0};
+
+  const signTrait=SIGN_TRAITS[planetData.sign]||{};
+
+  // Hero
+  document.getElementById('planet-hero-img').src=pd.img;
+  document.getElementById('planet-hero-img').alt=pd.label;
+  document.getElementById('planet-hero-sym').textContent=pd.sym;
+  document.getElementById('planet-hero-sym').style.color=pd.color;
+  document.getElementById('planet-hero-name').textContent=pd.label;
+  document.getElementById('planet-hero-name').style.color=pd.color;
+  document.getElementById('planet-hero-sub').textContent=(planetData.sign||'?')+' · '+planetData.deg+'° · '+pd.astro;
+  document.getElementById('planet-hero-sign').textContent=SYMS[SIGNS.indexOf(planetData.sign)]||'✦'+' '+(planetData.sign||'?');
+
+  // Info grid
+  const PLANET_MEANINGS_LOCAL={
+    sun:{key2:'Kimlik & Ego',desc:'Temel kişiliğin ve bilinçli benliğin'},
+    moon:{key2:'Duygular',desc:'Duygusal doğan ve sezgilerin'},
+    mercury:{key2:'Zihin',desc:'Düşünce ve iletişim biçimin'},
+    venus:{key2:'Aşk & Değerler',desc:'Sevgi dili ve neye değer verdiğin'},
+    mars:{key2:'Eylem',desc:'Drive\'ın ve hedeflere ulaşma biçimin'},
+    jupiter:{key2:'Şans & Büyüme',desc:'Gelişim alanların ve şans kapıların'},
+    saturn:{key2:'Dersler',desc:'Hayat derslerin ve kısıtlamaların'},
+    uranus:{key2:'Değişim',desc:'Devrimci yanın ve özgünlüğün'},
+    neptune:{key2:'Hayaller',desc:'Spiritüel derinliğin ve hayallerin'},
+    pluto:{key2:'Dönüşüm',desc:'Köklü değişimlerin ve gizli gücün'},
+  };
+  const pm=PLANET_MEANINGS_LOCAL[key]||{key2:'—',desc:'—'};
+
+  document.getElementById('planet-info-grid').innerHTML=`
+    <div class="planet-info-card">
+      <div class="planet-info-label">Burç Konumu</div>
+      <div class="planet-info-value" style="color:${pd.color}">${planetData.sign||'?'} ${planetData.deg}°</div>
+      <div class="planet-info-sub">${signTrait.el||'?'} Elementi · ${signTrait.q||'?'}</div>
+    </div>
+    <div class="planet-info-card">
+      <div class="planet-info-label">Astrolojik Anlam</div>
+      <div class="planet-info-value">${pm.key2}</div>
+      <div class="planet-info-sub">${pm.desc}</div>
+    </div>
+    <div class="planet-info-card">
+      <div class="planet-info-label">Çap</div>
+      <div class="planet-info-value">${pd.diameter}</div>
+      <div class="planet-info-sub">Güneş'e mesafe: ${pd.distance}</div>
+    </div>
+    <div class="planet-info-card">
+      <div class="planet-info-label">Yönettiği Alan</div>
+      <div class="planet-info-value">${signTrait.ruler||pd.sym} Yönetimi</div>
+      <div class="planet-info-sub">${pd.fact.slice(0,55)}...</div>
+    </div>`;
+
+  // Analysis
+  document.getElementById('planet-analysis-title').textContent=pd.sym+' '+pd.label+' — Haritandaki Etkisi';
+  document.getElementById('planet-analysis-text').textContent=
+    `${pd.label}, haritanda ${planetData.sign||'?'} burcunun ${planetData.deg}. derecesinde konumlanan ${pd.label}, ${pd.astro.toLowerCase()} alanını doğrudan etkiliyor. `+
+    `${signTrait.el||'?'} elementinin enerjisiyle birleşince ${signTrait.str||'güçlü bir potansiyel'} ortaya çıkıyor. `+
+    `${pd.fact} `+
+    `Astrolojik açıdan bu konumlama, ${signTrait.love||'ilişkilerde özgün bir tarz'} ve ${signTrait.career||'kariyer alanında belirgin eğilimler'} gösteriyor.`;
+
+  // Strengths/challenges
+  const strengths=[signTrait.str,signTrait.career||'Kariyer potansiyeli',signTrait.love||'İlişki tarzı'].filter(Boolean);
+  const challenges=[signTrait.ch,'Dengesiz dönemlerde farkındalık gerekli'].filter(Boolean);
+
+  document.getElementById('planet-strengths').innerHTML=strengths.map(t=>
+    `<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--dim);margin-bottom:6px;">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px;"></div>${t}
+    </div>`).join('');
+
+  document.getElementById('planet-challenges').innerHTML=challenges.map(t=>
+    `<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--dim);margin-bottom:6px;">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--pink);flex-shrink:0;margin-top:4px;"></div>${t}
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
 // VIRTUALSKY INTEGRATION
 // ═══════════════════════════════════════════════
 let skyNow=null, skyBirth=null;
 
 function initSkyMap(state){
-  // Temizle (sayfa yenileme)
+  if(typeof S==='undefined'){
+    console.warn('VirtualSky: stuQuery(S) not loaded');
+    showSkyFallback();
+    return;
+  }
+
   const nowEl=document.getElementById('velum-sky-now');
   const birthEl=document.getElementById('velum-sky-birth');
-  if(!nowEl||typeof S==='undefined')return;
-  nowEl.innerHTML='';birthEl.innerHTML='';
+  if(!nowEl)return;
 
-  const lat=state.lat||41.0;  // fallback Istanbul
-  const lon=state.lon||29.0;
+  // Önceki instance'ları temizle
+  nowEl.innerHTML=''; birthEl.innerHTML='';
+  skyNow=null; skyBirth=null;
 
-  // Ortak stil ayarları
+  const lat=state.lat||41.0082;
+  const lon=state.lon||28.9784;
+
+  // Container mutlaka visible ve boyutlu olmalı
+  nowEl.style.display='block';
+  const W=nowEl.offsetWidth||window.innerWidth||800;
+  const H=Math.max(380, Math.floor(W*0.52));
+  nowEl.style.height=H+'px';
+  birthEl.style.height=H+'px';
+
   const commonOpts={
-    latitude:lat,
-    longitude:lon,
+    latitude:lat, longitude:lon,
+    width:W, height:H,
     projection:'stereo',
     constellations:true,
     constellationlabels:true,
     showstarlabels:true,
     showplanets:true,
-    meteorshowers:true,
+    showplanetlabels:true,
+    meteorshowers:false,
     gridlines_az:false,
     gridlines_eq:false,
     mouse:true,
     keyboard:true,
     gradient:true,
-    magnitude:5.5,
+    magnitude:5.8,
     credit:false,
-    lang:'tr',
-    // Velum'un koyu temasına uygun renk
-    color:'rgba(180,150,255,0.75)',
+    lang:'en',
+    color:'rgba(196,181,253,0.85)',
     background:'rgba(5,4,15,1)',
   };
 
@@ -1840,23 +2137,58 @@ function initSkyMap(state){
     skyNow=S.virtualsky(Object.assign({},commonOpts,{
       id:'velum-sky-now',
       live:true,
-      clock:'now',
     }));
-  }catch(e){console.warn('VirtualSky now error:',e);}
+    console.log('VirtualSky NOW ok');
+  }catch(e){
+    console.error('VirtualSky now error:',e);
+    nowEl.innerHTML='<div style="color:rgba(196,181,253,.6);text-align:center;padding:3rem;font-size:14px;">Gökyüzü yüklenemedi: '+e.message+'</div>';
+  }
 
-  // Doğum anı gökyüzü
-  try{
-    // Doğum tarih+saat'i UTC ISO string'e çevir
-    const birthISO=state.birthDate+'T'+(state.birthTime||'12:00')+':00';
-    skyBirth=S.virtualsky(Object.assign({},commonOpts,{
-      id:'velum-sky-birth',
-      live:false,
-      clock:birthISO,
-    }));
-  }catch(e){console.warn('VirtualSky birth error:',e);}
+  // Doğum anı gökyüzü (display:none olduğu için lazy)
+  APP._birthSkyPending=true;
 
-  // Gezegen kartları
   buildSkyPlanetCards(state);
+}
+
+function initBirthSky(state){
+  if(!APP._birthSkyPending||skyBirth||typeof S==='undefined')return;
+  APP._birthSkyPending=false;
+  const birthEl=document.getElementById('velum-sky-birth');
+  if(!birthEl)return;
+  const W=birthEl.offsetWidth||window.innerWidth||800;
+  const H=parseInt(birthEl.style.height)||420;
+  try{
+    const birthISO=state.birthDate+'T'+(state.birthTime||'12:00')+':00';
+    skyBirth=S.virtualsky({
+      id:'velum-sky-birth',
+      latitude:state.lat||41.0082, longitude:state.lon||28.9784,
+      width:W, height:H,
+      projection:'stereo',
+      constellations:true,
+      constellationlabels:true,
+      showstarlabels:true,
+      showplanets:true,
+      showplanetlabels:true,
+      mouse:true, keyboard:true,
+      gradient:true, magnitude:5.8,
+      credit:false, lang:'en',
+      clock:birthISO,
+      color:'rgba(196,181,253,0.85)',
+      background:'rgba(5,4,15,1)',
+    });
+    console.log('VirtualSky BIRTH ok');
+  }catch(e){
+    console.error('VirtualSky birth error:',e);
+  }
+}
+
+function showSkyFallback(){
+  const el=document.getElementById('velum-sky-now');
+  if(el) el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:380px;color:rgba(196,181,253,.6);text-align:center;gap:1rem;padding:2rem;">
+    <div style="font-size:48px;">🌌</div>
+    <div style="font-size:15px;">Planetarium yüklenemedi</div>
+    <div style="font-size:12px;opacity:.7;">Sayfayı yenile veya tarayıcını güncelle</div>
+  </div>`;
 }
 
 function switchSkyTab(tab,btn){
@@ -1869,13 +2201,15 @@ function switchSkyTab(tab,btn){
     nowEl.style.display='block';
     birthEl.style.display='none';
     document.getElementById('sky-info-title').textContent='✦ Anlık Gökyüzü — '+new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    document.getElementById('sky-info-text').textContent='Gezegenler ve yıldızlar şu an gerçek konumlarında. Farenle sürükle, kaydır, büyüt. Gökyüzü her saniye güncelleniyor.';
+    document.getElementById('sky-info-text').textContent='Gezegenler ve yıldızlar şu an gerçek konumlarında. Farenle sürükle, döndür. Gökyüzü her saniye güncelleniyor.';
   }else{
-    nowEl.style.display='none';
     birthEl.style.display='block';
+    nowEl.style.display='none';
     const s=APP.state;
-    document.getElementById('sky-info-title').textContent='⭐ Doğum Anındaki Gökyüzü — '+s.birthDate+' '+s.birthTime;
-    document.getElementById('sky-info-text').textContent=`${s.name}, ${s.birthDate} tarihinde ${s.birthCity||'doğduğun yerde'} gökyüzü tam olarak böyle görünüyordu. ${s.sun} Güneşi, ${s.moon} Ayı ve ${s.asc} Yükselişin haritanda kayıtlı.`;
+    document.getElementById('sky-info-title').textContent='⭐ Doğum Anındaki Gökyüzü — '+s.birthDate+' '+(s.birthTime||'');
+    document.getElementById('sky-info-text').textContent=s.name+', '+s.birthDate+' tarihinde gökyüzü tam olarak böyle görünüyordu. '+s.sun+' Güneşi, '+s.moon+' Ayı burada doğdu.';
+    // Lazy init birth sky
+    setTimeout(()=>initBirthSky(s),80);
   }
 }
 
