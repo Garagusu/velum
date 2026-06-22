@@ -303,6 +303,7 @@ nav{
     <button class="nav-tab" data-page="synastry">Aşk & Uyum</button>
     <button class="nav-tab" data-page="personality">Kişilik</button>
     <button class="nav-tab" data-page="career">Kariyer</button>
+    <button class="nav-tab" data-page="skymap">Gökyüzü</button>
     <button class="nav-tab" data-page="chat">Astrolog AI</button>
     <button class="nav-tab" data-page="profile">Profil</button>
   </div>
@@ -583,6 +584,41 @@ nav{
   </div>
 </div>
 
+
+<!-- ═══ SKYMAP ═══ -->
+<div id="page-skymap" class="page">
+  <div class="greeting-small" style="margin-bottom:1rem;letter-spacing:2px;">✦ GÖKYÜZÜ HARİTASI</div>
+
+  <div class="sky-tabs" style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
+    <button class="f-tab active" id="sky-tab-now" onclick="switchSkyTab('now',this)">🔴 Anlık Gökyüzü</button>
+    <button class="f-tab" id="sky-tab-birth" onclick="switchSkyTab('birth',this)">⭐ Doğum Anın</button>
+  </div>
+
+  <div style="background:var(--card);border:.5px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:1rem;">
+    <div id="velum-sky-now" style="width:100%;height:420px;"></div>
+    <div id="velum-sky-birth" style="width:100%;height:420px;display:none;"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;" id="sky-planet-cards"></div>
+
+  <div class="f-card">
+    <div class="f-card-title" id="sky-info-title">✦ Anlık Gökyüzü</div>
+    <div class="f-text" id="sky-info-text">Gezegenler, takımyıldızlar ve yıldızlar şu an gerçek konumlarında gösteriliyor. Farenle sürükleyerek gökyüzünü döndür, kaydır. Bir gezegene tıkla detay gör.</div>
+  </div>
+
+  <div class="f-card">
+    <div class="f-card-title">🔑 Klavye Kısayolları</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:.5rem;">
+      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">+/-</kbd> Zaman ileri/geri</div>
+      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">c</kbd> Takımyıldızlar</div>
+      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">p</kbd> Gezegenler</div>
+      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">8</kbd> Şu ana dön</div>
+      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">g</kbd> Izgara çizgileri</div>
+      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">?</kbd> Tüm kısayollar</div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /app -->
 
 <!-- API KEY MODAL -->
@@ -599,6 +635,7 @@ nav{
   </div>
 </div>
 
+<script src="virtualsky.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════
 // GALAXY BACKGROUND
@@ -1030,6 +1067,7 @@ function buildAll(){
   buildCareer(s);
   buildSynastryPreFill(s);
   initChat(s);
+  // SkyMap is initialized lazily on first visit
 }
 
 // ═══════════════════════════════════════════════
@@ -1613,6 +1651,117 @@ function showPage(id){
   document.getElementById('page-'+id)?.classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
   if(id==='chart'&&APP.state)requestAnimationFrame(()=>buildChart(APP.state));
+  if(id==='skymap'&&APP.state){
+    requestAnimationFrame(()=>{
+      if(!skyNow) initSkyMap(APP.state);
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════
+// VIRTUALSKY INTEGRATION
+// ═══════════════════════════════════════════════
+let skyNow=null, skyBirth=null;
+
+function initSkyMap(state){
+  // Temizle (sayfa yenileme)
+  const nowEl=document.getElementById('velum-sky-now');
+  const birthEl=document.getElementById('velum-sky-birth');
+  if(!nowEl||typeof S==='undefined')return;
+  nowEl.innerHTML='';birthEl.innerHTML='';
+
+  const lat=state.lat||41.0;  // fallback Istanbul
+  const lon=state.lon||29.0;
+
+  // Ortak stil ayarları
+  const commonOpts={
+    latitude:lat,
+    longitude:lon,
+    projection:'stereo',
+    constellations:true,
+    constellationlabels:true,
+    showstarlabels:true,
+    showplanets:true,
+    meteorshowers:true,
+    gridlines_az:false,
+    gridlines_eq:false,
+    mouse:true,
+    keyboard:true,
+    gradient:true,
+    magnitude:5.5,
+    credit:false,
+    lang:'tr',
+    // Velum'un koyu temasına uygun renk
+    color:'rgba(180,150,255,0.75)',
+    background:'rgba(5,4,15,1)',
+  };
+
+  // Anlık gökyüzü
+  try{
+    skyNow=S.virtualsky(Object.assign({},commonOpts,{
+      id:'velum-sky-now',
+      live:true,
+      clock:'now',
+    }));
+  }catch(e){console.warn('VirtualSky now error:',e);}
+
+  // Doğum anı gökyüzü
+  try{
+    // Doğum tarih+saat'i UTC ISO string'e çevir
+    const birthISO=state.birthDate+'T'+(state.birthTime||'12:00')+':00';
+    skyBirth=S.virtualsky(Object.assign({},commonOpts,{
+      id:'velum-sky-birth',
+      live:false,
+      clock:birthISO,
+    }));
+  }catch(e){console.warn('VirtualSky birth error:',e);}
+
+  // Gezegen kartları
+  buildSkyPlanetCards(state);
+}
+
+function switchSkyTab(tab,btn){
+  document.querySelectorAll('.sky-tabs .f-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const nowEl=document.getElementById('velum-sky-now');
+  const birthEl=document.getElementById('velum-sky-birth');
+
+  if(tab==='now'){
+    nowEl.style.display='block';
+    birthEl.style.display='none';
+    document.getElementById('sky-info-title').textContent='✦ Anlık Gökyüzü — '+new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('sky-info-text').textContent='Gezegenler ve yıldızlar şu an gerçek konumlarında. Farenle sürükle, kaydır, büyüt. Gökyüzü her saniye güncelleniyor.';
+  }else{
+    nowEl.style.display='none';
+    birthEl.style.display='block';
+    const s=APP.state;
+    document.getElementById('sky-info-title').textContent='⭐ Doğum Anındaki Gökyüzü — '+s.birthDate+' '+s.birthTime;
+    document.getElementById('sky-info-text').textContent=`${s.name}, ${s.birthDate} tarihinde ${s.birthCity||'doğduğun yerde'} gökyüzü tam olarak böyle görünüyordu. ${s.sun} Güneşi, ${s.moon} Ayı ve ${s.asc} Yükselişin haritanda kayıtlı.`;
+  }
+}
+
+function buildSkyPlanetCards(state){
+  const container=document.getElementById('sky-planet-cards');
+  if(!container)return;
+  const today=new Date();
+  const transits=calcPlanets(today.toISOString().split('T')[0]);
+  const planetColors={
+    sun:'#e8c870',moon:'#c8d8e8',mercury:'#6ee7b7',
+    venus:'#f9a8d4',mars:'#fca5a5',jupiter:'#86efac',
+    saturn:'#fde68a',neptune:'#a5f3fc',pluto:'#ddd6fe'
+  };
+  const items=[
+    {sym:'☉',name:'Güneş',sign:state.sun,natal:true},
+    {sym:'☽',name:'Ay',sign:state.moon,natal:true},
+    ...transits.slice(0,4).map(p=>({sym:p.symbol,name:p.name,sign:p.sign,natal:false,key:p.key}))
+  ];
+  container.innerHTML=items.map(p=>`
+    <div style="background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:.8rem;text-align:center;">
+      <div style="font-size:20px;margin-bottom:4px;color:${planetColors[p.key||'sun']||'#c4b5fd'}">${p.sym}</div>
+      <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;">${p.name}</div>
+      <div style="font-size:13px;color:var(--silver);margin-top:2px;">${p.sign}</div>
+      <div style="font-size:10px;color:${p.natal?'var(--gold)':'var(--purple3)'};margin-top:2px;">${p.natal?'Doğum':'Bugün'}</div>
+    </div>`).join('');
 }
 
 // ═══════════════════════════════════════════════
