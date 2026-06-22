@@ -1,30 +1,37 @@
 /* ═══════════════════════════════════════════════
    VELUM — AI Chat Component
-   chat.js
+   chat.js  —  Groq API (ücretsiz, hızlı)
+   Sonradan Claude'a geçmek için sadece
+   GROQ_API_KEY ve API_URL değiştir.
    ═══════════════════════════════════════════════ */
 
 const Chat = (() => {
 
-  const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+  // ── API Ayarları ─────────────────────────────
+  // Groq: console.groq.com → API Keys → Create
+  const GROQ_API_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.GROQ_API_KEY : 'YOUR_GROQ_API_KEY';
+  const API_URL      = 'https://api.groq.com/openai/v1/chat/completions';
+  const MODEL        = 'llama-3.3-70b-versatile'; // Groq'un en iyi ücretsiz modeli
 
-  // Replace with your API key or use a backend proxy
-  // For production: NEVER expose API key in frontend — use a backend route
-  const API_KEY = 'YOUR_ANTHROPIC_API_KEY';
+  // Claude'a geçince bu iki satırı şununla değiştir:
+  // const API_URL = 'https://api.anthropic.com/v1/messages';
+  // const MODEL   = 'claude-sonnet-4-6';
 
   let chatHistory = [];
-  let isLoading = false;
+  let isLoading   = false;
 
   // ── Init ──────────────────────────────────────
   function init(state) {
     chatHistory = [];
+
     const intro = document.getElementById('ai-intro');
     if (intro) {
-      intro.textContent = `Merhaba ${state.name}! ` +
-        `${state.sun} Güneşin, ${state.moon} Ayın ve ${state.asc} Yükselişinle zengin bir harita görüyorum. ` +
-        `Haritanda özellikle merak ettiğin bir alan var mı?`;
+      intro.textContent =
+        `Merhaba ${state.name}! ` +
+        `${state.sun} Güneşin, ${state.moon} Ayın ve ${state.asc} Yükselişinle ` +
+        `zengin bir harita görüyorum. Ne merak ediyorsun?`;
     }
 
-    // Quick question buttons
     document.querySelectorAll('.quick-q').forEach(btn => {
       btn.addEventListener('click', () => {
         const q = btn.dataset.question;
@@ -32,11 +39,9 @@ const Chat = (() => {
       });
     });
 
-    // Send button
-    const sendBtn = document.getElementById('chat-send-btn');
-    if (sendBtn) sendBtn.addEventListener('click', () => sendFromInput(state));
+    document.getElementById('chat-send-btn')
+      ?.addEventListener('click', () => sendFromInput(state));
 
-    // Enter key
     const input = document.getElementById('chat-input');
     if (input) {
       input.addEventListener('keydown', e => {
@@ -45,7 +50,6 @@ const Chat = (() => {
           sendFromInput(state);
         }
       });
-      // Auto-resize textarea
       input.addEventListener('input', () => {
         input.style.height = 'auto';
         input.style.height = Math.min(input.scrollHeight, 120) + 'px';
@@ -55,20 +59,19 @@ const Chat = (() => {
 
   function sendFromInput(state) {
     const input = document.getElementById('chat-input');
-    const msg = input?.value.trim();
+    const msg   = input?.value.trim();
     if (!msg) return;
     input.value = '';
     input.style.height = 'auto';
     sendMessage(msg, state);
   }
 
-  // ── Send message ──────────────────────────────
+  // ── Send ──────────────────────────────────────
   async function sendMessage(text, state) {
     if (isLoading) return;
     isLoading = true;
 
     appendMessage(text, 'user');
-
     const typing = appendTyping();
 
     try {
@@ -76,19 +79,19 @@ const Chat = (() => {
 
       const systemPrompt = CONTENT.buildAISystemPrompt(state);
 
-      const response = await fetch(ANTHROPIC_API, {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
+          model: MODEL,
           max_tokens: 1000,
-          system: systemPrompt,
-          messages: chatHistory.slice(-12),  // keep last 12 turns
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...chatHistory.slice(-12),
+          ],
         }),
       });
 
@@ -97,11 +100,9 @@ const Chat = (() => {
         throw new Error(err.error?.message || `HTTP ${response.status}`);
       }
 
-      const data = await response.json();
-      const reply = data.content
-        ?.filter(b => b.type === 'text')
-        .map(b => b.text)
-        .join('') || 'Kozmik bağlantı kurulamadı, birazdan tekrar dene.';
+      const data  = await response.json();
+      const reply = data.choices?.[0]?.message?.content?.trim()
+        || 'Kozmik bağlantı kurulamadı, birazdan tekrar dene.';
 
       chatHistory.push({ role: 'assistant', content: reply });
       typing.remove();
@@ -112,7 +113,7 @@ const Chat = (() => {
       const fallback = getFallbackResponse(text, state);
       chatHistory.push({ role: 'assistant', content: fallback });
       appendMessage(fallback, 'astrologer');
-      console.warn('Chat API error:', err.message);
+      console.warn('Chat error:', err.message);
     } finally {
       isLoading = false;
     }
@@ -123,17 +124,15 @@ const Chat = (() => {
     const container = document.getElementById('chat-messages');
     if (!container) return;
 
+    const now  = new Date();
+    const time = now.getHours().toString().padStart(2,'0') + ':' +
+                 now.getMinutes().toString().padStart(2,'0');
+
     const div = document.createElement('div');
     div.className = `msg ${role}`;
-
-    const now = new Date();
-    const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-    const senderLabel = role === 'user' ? 'Sen' : 'Velum';
-
     div.innerHTML = `
       <div class="msg-bubble">${escapeHtml(text)}</div>
-      <div class="msg-time">${senderLabel} · ${time}</div>
-    `;
+      <div class="msg-time">${role === 'user' ? 'Sen' : 'Velum'} · ${time}</div>`;
 
     container.appendChild(div);
     div.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -168,32 +167,29 @@ const Chat = (() => {
       .replace(/\n/g, '<br>');
   }
 
-  // ── Offline/error fallbacks ───────────────────
+  // ── Offline fallback ──────────────────────────
   function getFallbackResponse(question, state) {
     const { sun, moon, asc } = state;
     const q = question.toLowerCase();
 
     if (q.includes('aşk') || q.includes('sevgi') || q.includes('ilişki')) {
-      return `${sun} Güneşin ve ${moon} Ayının kombinasyonu aşk konusunda karmaşık bir tablo çiziyor. ` +
-        `Sezgisel derinliğin güçlü bir partner için çekici; ancak duygusal güvende ihtiyaç duyduğun sabır bulmak zaman alabilir. ` +
-        `Venüs haritanda sekizinci evi etkiliyor — bu derin bağlar kurduğunu, ama kolay güvenmediğini gösteriyor.`;
+      return `${sun} Güneşin ve ${moon} Ayının kombinasyonu aşk konusunda derin ama seçici bir yapı gösteriyor. ` +
+        `Kolay güvenmezsin — bu zayıflık değil, yüksek standartların. ` +
+        `Venüs haritanda sekizinci evi etkiliyor; yüzeysel bağlar seni tatmin etmez.`;
     }
-
     if (q.includes('kariyer') || q.includes('para') || q.includes('iş')) {
-      return `${asc} Yükselişin kariyer konusunda sana ciddi bir görünüm veriyor. ` +
-        `${sun} Güneşinin gücü uzun vadeli projelerde parıldıyor — anlık kazanımlardan çok kalıcı inşaatlara odaklan. ` +
-        `Önümüzdeki aylarda Jüpiter transiti kariyer kapılarını zorlayabilir, ama hazırlıklı olmak gerekiyor.`;
+      return `${asc} Yükselişin kariyer konusunda sana ciddi ve güvenilir bir görünüm veriyor. ` +
+        `${sun} Güneşinin gücü uzun vadeli projelerde parıldıyor — ` +
+        `anlık kazanımlardan çok kalıcı inşaatlara odaklan.`;
     }
-
     if (q.includes('güçlü') || q.includes('zayıf') || q.includes('yan')) {
-      return `${sun} Güneşinin en büyük gücü: kararlılık ve içten gelen bir güvenilirlik hissi. ` +
-        `${moon} Ayının getirdiği sezgisel derinlik seni birçok kişiden farklı kılıyor. ` +
-        `Zorlu tarafın ise ${asc} Yükselişinin bazen aşırı kontrol isteği ve duygusal mesafeye çekilme eğilimi. ` +
+      return `En büyük gücün: ${sun} Güneşinden gelen kararlılık ve ${moon} Ayından gelen derin sezgi. ` +
+        `Zorlu tarafın ise ${asc} Yükselişinin bazen aşırı kontrol isteği. ` +
         `Bu ikisi dengede tutulursa güçlü bir bütünleşme olabilir.`;
     }
 
-    return `Haritana baktığımda ${sun}-${moon}-${asc} üçlüsü oldukça ilginç bir dinamik gösteriyor. ` +
-      `Şu an API bağlantısı geçici olarak kesildi — birazdan tekrar dene, daha derin bir analiz için buradayım.`;
+    return `(API bağlantısı yok — önce console.groq.com'dan ücretsiz key al ve chat.js'e yapıştır.) ` +
+      `Haritana baktığımda ${sun}-${moon}-${asc} üçlüsü oldukça ilginç bir dinamik gösteriyor.`;
   }
 
   return { init, sendMessage };
