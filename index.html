@@ -444,11 +444,12 @@ nav{
 
 /* Page padding for bottom nav on mobile */
 @media(max-width:700px){
-  .bottom-nav{display:block;}
   .page{padding-bottom:90px;}
   nav .nav-tabs{display:none;}
   nav .nav-right{display:none;}
 }
+/* Bottom nav shown via JS after login */
+.bottom-nav.visible{display:block!important;}
 
 </style>
 </head>
@@ -478,7 +479,7 @@ nav{
 </nav>
 
 <!-- MOBILE BOTTOM NAV -->
-<nav class="bottom-nav" id="bottom-nav">
+<nav class="bottom-nav" id="bottom-nav" style="display:none;">
   <div class="bottom-nav-scroll">
     <button class="bnav-btn active" data-page="dashboard">
       <span class="bnav-icon">🏠</span>
@@ -1359,6 +1360,9 @@ function createChart(){
   saveState();
   buildAll();
   document.getElementById('main-nav').classList.remove('hidden');
+  // Show mobile bottom nav
+  const bnavEl=document.getElementById('bottom-nav');
+  if(bnavEl) bnavEl.classList.add('visible');
   showPage('dashboard');
 }
 
@@ -2096,7 +2100,13 @@ function bindNav(){
 function showPage(id){
   // Show/hide bottom nav
   const bnav=document.getElementById('bottom-nav');
-  if(bnav) bnav.style.display=(id==='onboarding'?'none':'block');
+  if(bnav){
+    if(id==='onboarding'){
+      bnav.classList.remove('visible');
+    } else if(APP.state){
+      bnav.classList.add('visible');
+    }
+  }
   if(id==='onboarding')document.getElementById('main-nav').classList.add('hidden');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id)?.classList.add('active');
@@ -2909,18 +2919,21 @@ function loadSaved(){
     const raw=localStorage.getItem('velum_state');
     if(!raw)return;
     const saved=JSON.parse(raw);
-    if(!saved?.birthDate)return;
-    ['inp-name','inp-date','inp-time','inp-city'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(!el)return;
-      const key=id.replace('inp-','').replace('-','');
-      const map={name:'name',date:'birthDate',time:'birthTime',city:'birthCity'};
-      if(saved[map[key.replace('inp','')]||key])el.value=saved[map[key.replace('inp','')]||key];
-    });
+    if(!saved?.birthDate||!saved?.sun)return;
+
+    // Pre-fill form
     document.getElementById('inp-name').value=saved.name||'';
     document.getElementById('inp-date').value=saved.birthDate||'';
     document.getElementById('inp-time').value=saved.birthTime||'';
     document.getElementById('inp-city').value=saved.birthCity||'';
+
+    // Auto-restore full session — skip onboarding
+    APP.state=saved;
+    buildAll(saved);
+    document.getElementById('main-nav').classList.remove('hidden');
+    const bnavEl=document.getElementById('bottom-nav');
+    if(bnavEl) bnavEl.classList.add('visible');
+    showPage('dashboard');
   }catch(_){}
 }
 </script>
