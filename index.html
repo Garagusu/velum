@@ -1358,12 +1358,13 @@ function createChart(){
     planets,
   };
   saveState();
-  buildAll();
+  // Show UI first so elements are visible/measurable
   document.getElementById('main-nav').classList.remove('hidden');
-  // Show mobile bottom nav
   const bnavEl=document.getElementById('bottom-nav');
   if(bnavEl) bnavEl.classList.add('visible');
   showPage('dashboard');
+  // Then build content (DOM is now active)
+  requestAnimationFrame(()=>buildAll());
 }
 
 function buildAll(stateOverride){
@@ -1371,7 +1372,7 @@ function buildAll(stateOverride){
   const s=APP.state;
   if(!s){console.error("buildAll: no state");return;}
   buildDashboard(s);
-  buildChart(s);
+  // buildChart is lazy — called when chart page opens
   buildForecasts(s);
   buildProfile(s);
   buildPersonality(s);
@@ -2957,13 +2958,11 @@ function loadSaved(){
       planets:planets2,
     };
 
-    setTimeout(()=>{
-      buildAll();
-      document.getElementById('main-nav').classList.remove('hidden');
-      const bnavEl=document.getElementById('bottom-nav');
-      if(bnavEl) bnavEl.classList.add('visible');
-      showPage('dashboard');
-    }, 80);
+    document.getElementById('main-nav').classList.remove('hidden');
+    const bnavEl2=document.getElementById('bottom-nav');
+    if(bnavEl2) bnavEl2.classList.add('visible');
+    showPage('dashboard');
+    requestAnimationFrame(()=>buildAll());
   }catch(_){}
 }
 </script>
