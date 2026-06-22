@@ -415,69 +415,6 @@ nav{
 }
 
 
-/* ── MOBILE BOTTOM NAV ── */
-.bottom-nav{
-  display:none;
-  position:fixed;bottom:0;left:0;right:0;z-index:200;
-  background:rgba(8,6,22,.95);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-top:.5px solid var(--border);
-  padding:.5rem .25rem calc(.5rem + env(safe-area-inset-bottom));
-}
-.bottom-nav-scroll{
-  display:flex;overflow-x:auto;gap:2px;
-  scrollbar-width:none;-webkit-overflow-scrolling:touch;
-  justify-content:space-around;
-}
-.bottom-nav-scroll::-webkit-scrollbar{display:none;}
-.bnav-btn{
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:6px 10px;border-radius:12px;border:none;
-  background:transparent;cursor:pointer;
-  color:var(--dim2);font-family:inherit;
-  transition:all .18s;flex-shrink:0;min-width:56px;
-}
-.bnav-btn.active{color:var(--purple3);background:rgba(139,92,246,.15);}
-.bnav-btn:active{transform:scale(.93);}
-.bnav-icon{font-size:20px;line-height:1;}
-.bnav-label{font-size:9px;letter-spacing:.3px;white-space:nowrap;}
-
-/* Page padding for bottom nav on mobile */
-@media(max-width:700px){
-  .page{padding-bottom:90px;}
-  nav .nav-tabs{display:none;}
-  nav .nav-right{display:none;}
-}
-/* Bottom nav shown via JS after login */
-.bottom-nav.visible{display:block!important;}
-
-
-/* ── MOBILE BOTTOM NAV ── */
-.bnav {
-  display: none;
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-  background: rgba(8,6,22,.97);
-  backdrop-filter: blur(20px);
-  border-top: .5px solid rgba(139,92,246,.25);
-  padding: .4rem .5rem calc(.4rem + env(safe-area-inset-bottom));
-}
-.bnav-row {
-  display: flex; overflow-x: auto; gap: 2px;
-  scrollbar-width: none; justify-content: space-around;
-}
-.bnav-row::-webkit-scrollbar { display: none; }
-.bnav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 5px 8px; border-radius: 10px; border: none;
-  background: transparent; cursor: pointer; color: rgba(200,216,232,.4);
-  font-family: inherit; transition: all .15s; flex-shrink: 0; min-width: 50px;
-}
-.bnav-item.active { color: #a78bfa; background: rgba(139,92,246,.15); }
-.bnav-item:active { transform: scale(.92); }
-.bnav-i { font-size: 19px; line-height: 1; }
-.bnav-l { font-size: 9px; white-space: nowrap; }
-@media (max-width: 700px) {
-  .bnav { display: block; }
   .page { padding-bottom: 85px; }
   nav .nav-tabs, nav .nav-right { display: none; }
 }
@@ -955,22 +892,6 @@ nav{
   </div>
 </div>
 
-<!-- MOBILE NAV -->
-<nav class="bnav" id="bnav">
-  <div class="bnav-row">
-    <button class="bnav-item active" data-p="dashboard"><span class="bnav-i">🏠</span><span class="bnav-l">Ana Sayfa</span></button>
-    <button class="bnav-item" data-p="chart"><span class="bnav-i">⭕</span><span class="bnav-l">Haritam</span></button>
-    <button class="bnav-item" data-p="forecast"><span class="bnav-i">🔮</span><span class="bnav-l">Öngörüler</span></button>
-    <button class="bnav-item" data-p="synastry"><span class="bnav-i">💕</span><span class="bnav-l">Aşk</span></button>
-    <button class="bnav-item" data-p="personality"><span class="bnav-i">✨</span><span class="bnav-l">Kişilik</span></button>
-    <button class="bnav-item" data-p="career"><span class="bnav-i">💼</span><span class="bnav-l">Kariyer</span></button>
-    <button class="bnav-item" data-p="planets"><span class="bnav-i">🪐</span><span class="bnav-l">Gezegenler</span></button>
-    <button class="bnav-item" data-p="skymap"><span class="bnav-i">🌌</span><span class="bnav-l">Gökyüzü</span></button>
-    <button class="bnav-item" data-p="cosmos"><span class="bnav-i">🔭</span><span class="bnav-l">Kozmos</span></button>
-    <button class="bnav-item" data-p="chat"><span class="bnav-i">🤖</span><span class="bnav-l">AI</span></button>
-    <button class="bnav-item" data-p="profile"><span class="bnav-i">👤</span><span class="bnav-l">Profil</span></button>
-  </div>
-</nav>
 
 </div><!-- /app -->
 
@@ -1433,7 +1354,6 @@ function createChart(){
   document.getElementById('main-nav').classList.remove('hidden');
   const bnavEl=document.getElementById('bottom-nav');
   if(bnavEl) bnavEl.classList.add('visible');
-  const _bn=document.getElementById('bnav');if(_bn)_bn.style.display='block';
   showPage('dashboard');
   // Then build content (DOM is now active)
   requestAnimationFrame(()=>buildAll());
@@ -2186,11 +2106,10 @@ function showPage(id){
       bnav.classList.add('visible');
     }
   }
-  if(id==='onboarding'){document.getElementById('main-nav').classList.add('hidden');const _bn3=document.getElementById('bnav');if(_bn3)_bn3.style.display='none';}
+  if(id==='onboarding')document.getElementById('main-nav').classList.add('hidden');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id)?.classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
-  document.querySelectorAll('.bnav-item').forEach(t=>t.classList.toggle('active',t.dataset.p===id));
   document.querySelectorAll('.bnav-btn').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
   if(id==='chart'&&APP.state)requestAnimationFrame(()=>buildChart(APP.state));
   if(id==='planets'&&APP.state) buildPlanetsPage(APP.state);
@@ -3037,7 +2956,6 @@ function loadSaved(){
     document.getElementById('main-nav').classList.remove('hidden');
     const bnavEl2=document.getElementById('bottom-nav');
     if(bnavEl2) bnavEl2.classList.add('visible');
-    const _bn2=document.getElementById('bnav');if(_bn2)_bn2.style.display='block';
     showPage('dashboard');
     requestAnimationFrame(()=>buildAll());
   }catch(_){}
