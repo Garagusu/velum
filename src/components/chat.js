@@ -9,7 +9,9 @@ const Chat = (() => {
 
   // ── API Ayarları ─────────────────────────────
   // Groq: console.groq.com → API Keys → Create
-  const GROQ_API_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.GROQ_API_KEY : 'YOUR_GROQ_API_KEY';
+  // Key önce sessionStorage'dan, sonra config.js'den okunur
+  const GROQ_API_KEY = sessionStorage.getItem('velum_groq_key')
+    || (typeof CONFIG !== 'undefined' ? CONFIG.GROQ_API_KEY : null);
   const API_URL      = 'https://api.groq.com/openai/v1/chat/completions';
   const MODEL        = 'llama-3.3-70b-versatile'; // Groq'un en iyi ücretsiz modeli
 
@@ -69,6 +71,15 @@ const Chat = (() => {
   // ── Send ──────────────────────────────────────
   async function sendMessage(text, state) {
     if (isLoading) return;
+
+    // Key yoksa kullanıcıya bildir
+    const key = sessionStorage.getItem('velum_groq_key')
+      || (typeof CONFIG !== 'undefined' ? CONFIG.GROQ_API_KEY : null);
+    if (!key || key === 'YOUR_GROQ_API_KEY_HERE') {
+      appendMessage('AI sohbet için Groq API key gerekli. Ana sayfaya dön ve formdaki alana key'ini gir.', 'astrologer');
+      return;
+    }
+
     isLoading = true;
 
     appendMessage(text, 'user');
@@ -83,7 +94,7 @@ const Chat = (() => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Authorization': `Bearer ${key}`,
         },
         body: JSON.stringify({
           model: MODEL,
