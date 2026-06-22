@@ -342,6 +342,78 @@ nav{
   .nav-tabs{display:none;}
   .page{padding:1rem;}
 }
+
+/* ── COSMOS PAGE ── */
+.cosmos-hero{
+  position:relative;width:100%;border-radius:var(--r2);overflow:hidden;
+  margin-bottom:1.25rem;background:#000;
+  aspect-ratio:16/9;max-height:500px;
+}
+.cosmos-hero-img{
+  width:100%;height:100%;object-fit:cover;
+  transition:opacity .5s;display:block;
+}
+.cosmos-hero-video{width:100%;height:100%;object-fit:cover;display:block;}
+.cosmos-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(5,4,15,.96) 0%,rgba(5,4,15,.4) 50%,rgba(5,4,15,.15) 100%);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:1.5rem;
+}
+.cosmos-date{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;}
+.cosmos-title{font-size:22px;color:#fff;line-height:1.35;margin-bottom:.5rem;}
+.cosmos-credit{font-size:11px;color:var(--dim2);}
+.cosmos-story{
+  background:var(--card);border:.5px solid var(--border);
+  border-radius:var(--r2);padding:1.5rem;margin-bottom:1rem;
+  position:relative;overflow:hidden;
+}
+.cosmos-story::before{
+  content:'✦';position:absolute;top:1rem;right:1.25rem;
+  font-size:32px;color:var(--purple);opacity:.15;
+}
+.cosmos-story-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--purple3);margin-bottom:.75rem;}
+.cosmos-story-text{font-size:15px;color:var(--silver);line-height:1.85;}
+.cosmos-story-text .highlight{color:var(--gold2);}
+.cosmos-loading{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:200px;gap:1rem;color:var(--dim);
+}
+.cosmos-spinner{
+  width:36px;height:36px;border-radius:50%;
+  border:2px solid rgba(139,92,246,.2);border-top-color:var(--purple);
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.cosmos-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.cosmos-fact{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1rem;}
+.cosmos-fact-icon{font-size:22px;margin-bottom:.4rem;}
+.cosmos-fact-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:.3rem;}
+.cosmos-fact-text{font-size:13px;color:var(--silver);line-height:1.5;}
+.cosmos-archive{display:flex;gap:8px;overflow-x:auto;padding-bottom:.5rem;margin-bottom:1rem;scrollbar-width:none;}
+.cosmos-archive::-webkit-scrollbar{display:none;}
+.cosmos-archive-item{
+  flex-shrink:0;width:90px;cursor:pointer;
+  border-radius:var(--r);overflow:hidden;
+  border:1.5px solid transparent;transition:border-color .2s;
+}
+.cosmos-archive-item:hover,.cosmos-archive-item.active{border-color:var(--purple);}
+.cosmos-archive-img{width:90px;height:65px;object-fit:cover;display:block;background:#0a0820;}
+.cosmos-archive-date{text-align:center;font-size:9px;color:var(--dim2);padding:4px 2px;}
+.cosmos-nav-btns{display:flex;gap:8px;margin-bottom:1.25rem;}
+.cosmos-btn{
+  padding:8px 18px;border-radius:20px;font-size:12px;
+  border:.5px solid var(--border);background:transparent;
+  color:var(--dim);cursor:pointer;font-family:inherit;
+  transition:all .18s;display:flex;align-items:center;gap:6px;
+}
+.cosmos-btn:hover{color:var(--purple3);border-color:var(--border2);}
+.cosmos-btn.primary{background:rgba(139,92,246,.2);color:var(--purple3);border-color:var(--border2);}
+@media(max-width:600px){
+  .cosmos-facts{grid-template-columns:1fr 1fr;}
+  .cosmos-title{font-size:17px;}
+}
+
 </style>
 </head>
 <body>
@@ -360,6 +432,7 @@ nav{
     <button class="nav-tab" data-page="career">Kariyer</button>
     <button class="nav-tab" data-page="planets">Gezegenler</button>
     <button class="nav-tab" data-page="skymap">Gökyüzü</button>
+    <button class="nav-tab" data-page="cosmos">Kozmos</button>
     <button class="nav-tab" data-page="chat">Astrolog AI</button>
     <button class="nav-tab" data-page="profile">Profil</button>
   </div>
@@ -711,6 +784,56 @@ nav{
       <div class="f-card-title" style="color:var(--pink);">⚡ Zorluklar</div>
       <div id="planet-challenges" style="margin-top:.5rem;"></div>
     </div>
+  </div>
+</div>
+
+<!-- ═══ COSMOS ═══ -->
+<div id="page-cosmos" class="page">
+  <div class="greeting-small" style="margin-bottom:1rem;letter-spacing:2px;">✦ GÜNÜN KOZMİK HİKAYESİ</div>
+
+  <div id="cosmos-loading" class="cosmos-loading">
+    <div class="cosmos-spinner"></div>
+    <div>Evrenin bugünkü mesajı alınıyor...</div>
+  </div>
+
+  <div id="cosmos-content" style="display:none;">
+    <!-- Hero Image/Video -->
+    <div class="cosmos-hero" id="cosmos-hero">
+      <img id="cosmos-img" class="cosmos-hero-img" src="" alt="" loading="lazy"/>
+      <div class="cosmos-overlay">
+        <div class="cosmos-date" id="cosmos-date"></div>
+        <div class="cosmos-title" id="cosmos-title"></div>
+        <div class="cosmos-credit" id="cosmos-credit"></div>
+      </div>
+    </div>
+
+    <!-- Nav buttons -->
+    <div class="cosmos-nav-btns">
+      <button class="cosmos-btn" onclick="loadCosmos(-1)">← Dün</button>
+      <button class="cosmos-btn primary" onclick="loadCosmos(0)">🔴 Bugün</button>
+      <button class="cosmos-btn" onclick="loadCosmos(1)" id="cosmos-next-btn">Yarın →</button>
+    </div>
+
+    <!-- AI Story -->
+    <div class="cosmos-story" id="cosmos-story">
+      <div class="cosmos-story-label">✦ Velum'un Kozmik Yorumu</div>
+      <div class="cosmos-story-text" id="cosmos-story-text">
+        <div class="cosmos-loading"><div class="cosmos-spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Quick facts -->
+    <div class="cosmos-facts" id="cosmos-facts"></div>
+
+    <!-- Archive strip -->
+    <div class="sec-title">✦ Son 7 Gün</div>
+    <div class="cosmos-archive" id="cosmos-archive"></div>
+
+    <!-- Original description toggle -->
+    <details style="margin-top:.5rem;">
+      <summary style="font-size:12px;color:var(--dim);cursor:pointer;padding:.5rem 0;">NASA'nın orijinal açıklamasını gör</summary>
+      <div style="font-size:12px;color:var(--dim2);line-height:1.7;margin-top:.75rem;padding:.75rem;background:var(--card);border-radius:var(--r);" id="cosmos-original"></div>
+    </details>
   </div>
 </div>
 
@@ -1164,7 +1287,7 @@ function buildAll(){
   buildSynastryPreFill(s);
   initChat(s);
   buildPlanetsPage(s);
-  // SkyMap is initialized lazily on first visit
+  // SkyMap and Cosmos are initialized lazily on first visit
 }
 
 // ═══════════════════════════════════════════════
@@ -1887,6 +2010,10 @@ function showPage(id){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
   if(id==='chart'&&APP.state)requestAnimationFrame(()=>buildChart(APP.state));
   if(id==='planets'&&APP.state) buildPlanetsPage(APP.state);
+  if(id==='cosmos'){
+    const cosmosEl=document.getElementById('cosmos-content');
+    if(!cosmosEl||cosmosEl.style.display==='none') initCosmos();
+  }
   if(id==='skymap'&&APP.state){
     requestAnimationFrame(()=>{
       if(!skyNow) initSkyMap(APP.state);
@@ -1898,76 +2025,151 @@ function showPage(id){
 // PLANETS SHOWCASE
 // Gerçek NASA/Wikimedia görüntüleri
 // ═══════════════════════════════════════════════
-const PLANET_IMAGES={
-  sun:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/600px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg',
-    color:'#f0c040',sym:'☉',label:'GÜNEŞ',
+
+const PLANET_DATA={
+  sun:{color:'#f0c040',sym:'☉',label:'GÜNEŞ',
     diameter:'1,392,700 km',distance:'149.6M km',
-    fact:'Güneş sistemimizdeki kütlenin %99.86\'sını oluşturur.',
+    fact:'Güneş sistemimizdeki kütlenin %99.86\'sını oluşturur. Yüzey sıcaklığı 5,500°C.',
     astro:'Kimlik, ego ve yaşam amacı',
+    draw(c,x,y,r){
+      for(let i=4;i>0;i--){const g=c.createRadialGradient(x,y,r*.8,x,y,r*i);g.addColorStop(0,`rgba(255,200,50,${.12/i})`);g.addColorStop(1,'transparent');c.fillStyle=g;c.beginPath();c.arc(x,y,r*i,0,Math.PI*2);c.fill();}
+      const sg=c.createRadialGradient(x-r*.3,y-r*.3,r*.1,x,y,r);
+      sg.addColorStop(0,'#fff8c0');sg.addColorStop(.3,'#ffd640');sg.addColorStop(.7,'#ff9500');sg.addColorStop(1,'#c85000');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=sg;c.fill();
+      for(let i=0;i<16;i++){const a=Math.random()*Math.PI*2,d=Math.random()*r*.82;const sx=x+d*Math.cos(a),sy=y+d*Math.sin(a);c.beginPath();c.arc(sx,sy,r*.07,0,Math.PI*2);c.fillStyle=`rgba(255,160,0,${.15+Math.random()*.18})`;c.fill();}
+    }
   },
-  moon:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/600px-FullMoon2010.jpg',
-    color:'#dce8f8',sym:'☽',label:'AY',
+  moon:{color:'#dce8f8',sym:'☽',label:'AY',
     diameter:'3,474 km',distance:'384,400 km',
-    fact:'Dünya\'nın tek doğal uydusu, gel-git hareketlerini kontrol eder.',
+    fact:'Dünya\'nın tek doğal uydusu. Gel-git olaylarını ve ekolojik döngüleri etkiler.',
     astro:'Duygular, sezgi ve içgüdüsel tepkiler',
+    draw(c,x,y,r){
+      const g=c.createRadialGradient(x-r*.2,y-r*.25,r*.1,x,y,r);
+      g.addColorStop(0,'#f4f4f0');g.addColorStop(.5,'#c8ccc8');g.addColorStop(1,'#808878');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      [[-.2,-.3,r*.22],[.35,.1,r*.14],[-.1,.3,r*.18],[.25,-.35,r*.1],[-.4,.15,r*.09]].forEach(([dx,dy,cr])=>{
+        c.beginPath();c.arc(x+dx*r,y+dy*r,cr,0,Math.PI*2);c.fillStyle='rgba(100,100,90,.35)';c.fill();
+        c.strokeStyle='rgba(200,200,190,.2)';c.lineWidth=1;c.stroke();
+      });
+      const sh=c.createLinearGradient(x-r,y,x+r,y);
+      sh.addColorStop(0,'rgba(5,4,15,0)');sh.addColorStop(.55,'rgba(5,4,15,0)');sh.addColorStop(1,'rgba(5,4,15,.55)');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=sh;c.fill();
+    }
   },
-  mercury:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Mercury_in_true_color.jpg/600px-Mercury_in_true_color.jpg',
-    color:'#5eefc8',sym:'☿',label:'MERKÜR',
+  mercury:{color:'#5eefc8',sym:'☿',label:'MERKÜR',
     diameter:'4,879 km',distance:'77.3M km',
-    fact:'Güneş sisteminin en küçük ve en hızlı gezegende; bir yılı 88 gün.',
+    fact:'En küçük gezegen. Bir yılı 88 Dünya günü, bir günü ise 59 Dünya günü sürer.',
     astro:'Zihin, iletişim ve düşünce biçimi',
+    draw(c,x,y,r){
+      const g=c.createRadialGradient(x-r*.2,y-r*.2,r*.05,x,y,r);
+      g.addColorStop(0,'#d0c8b8');g.addColorStop(.4,'#9c8c78');g.addColorStop(1,'#5a4e3c');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      [[-.3,-.2,r*.18],[.2,.3,r*.12],[-.1,.25,r*.09],[.3,-.25,r*.14]].forEach(([dx,dy,cr])=>{
+        c.beginPath();c.arc(x+dx*r,y+dy*r,cr,0,Math.PI*2);c.fillStyle='rgba(60,50,35,.4)';c.fill();
+      });
+    }
   },
-  venus:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Venus-real_color.jpg/600px-Venus-real_color.jpg',
-    color:'#f8a4d0',sym:'♀',label:'VENÜS',
+  venus:{color:'#f8a4d0',sym:'♀',label:'VENÜS',
     diameter:'12,104 km',distance:'261M km',
-    fact:'Atmosferindeki yoğun CO₂ bulutu yüzünden en sıcak gezegen (462°C).',
+    fact:'Atmosferindeki CO₂ yüzünden en sıcak gezegen (462°C). Bulutlar sülfürik asit içerir.',
     astro:'Aşk, güzellik, değerler ve para',
+    draw(c,x,y,r){
+      for(let i=3;i>0;i--){c.beginPath();c.arc(x,y,r+i*6,0,Math.PI*2);c.fillStyle=`rgba(255,220,180,${.04*i})`;c.fill();}
+      const g=c.createRadialGradient(x-r*.2,y-r*.3,r*.1,x,y,r);
+      g.addColorStop(0,'#fff0d0');g.addColorStop(.4,'#e8c890');g.addColorStop(.8,'#c89850');g.addColorStop(1,'#a07030');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      c.save();c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.clip();
+      for(let i=0;i<6;i++){const cy2=y-r*.6+i*(r*.22);c.beginPath();c.ellipse(x,cy2,r*.9,r*.06,0,0,Math.PI*2);c.fillStyle=`rgba(255,240,200,${.08+i*.01})`;c.fill();}
+      c.restore();
+    }
   },
-  mars:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/600px-OSIRIS_Mars_true_color.jpg',
-    color:'#f87070',sym:'♂',label:'MARS',
+  mars:{color:'#f87070',sym:'♂',label:'MARS',
     diameter:'6,779 km',distance:'225M km',
-    fact:'Demir oksit (pas) yüzünden kırmızı görünür. Olympus Mons, Güneş sisteminin en yüksek dağıdır.',
+    fact:'Demir oksit yüzünden kırmızı görünür. Olympus Mons, 21 km yüksekliğiyle dev bir yanardağdır.',
     astro:'Eylem, enerji, cesaret ve arzular',
+    draw(c,x,y,r){
+      const g=c.createRadialGradient(x-r*.25,y-r*.25,r*.05,x,y,r);
+      g.addColorStop(0,'#f0907a');g.addColorStop(.4,'#c05030');g.addColorStop(1,'#7a2810');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      c.beginPath();c.ellipse(x,y-r*.78,r*.3,r*.12,0,0,Math.PI*2);c.fillStyle='rgba(255,255,255,.65)';c.fill();
+      c.beginPath();c.moveTo(x-r*.4,y+r*.05);c.bezierCurveTo(x-r*.1,y,x+r*.1,y+r*.1,x+r*.45,y+r*.08);
+      c.strokeStyle='rgba(100,30,10,.5)';c.lineWidth=r*.05;c.stroke();
+    }
   },
-  jupiter:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Jupiter_and_its_shrunken_Great_Red_Spot.jpg/600px-Jupiter_and_its_shrunken_Great_Red_Spot.jpg',
-    color:'#8fef9f',sym:'♃',label:'JÜPİTER',
+  jupiter:{color:'#8fef9f',sym:'♃',label:'JÜPİTER',
     diameter:'139,820 km',distance:'778.5M km',
-    fact:'Güneş sisteminin en büyük gezegende. Büyük Kırmızı Leke, 350 yıldır süren fırtına.',
+    fact:'Güneş sisteminin en büyük gezegende. Büyük Kırmızı Leke 350 yıldır süren bir fırtınadır.',
     astro:'Şans, genişleme, bilgelik ve büyüme',
+    draw(c,x,y,r){
+      const g=c.createRadialGradient(x-r*.2,y-r*.1,r*.1,x,y,r);
+      g.addColorStop(0,'#f0e0c0');g.addColorStop(.3,'#d4a870');g.addColorStop(.7,'#b07840');g.addColorStop(1,'#7a4820');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      c.save();c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.clip();
+      [[-.75,'#c8a060',.12],[-.55,'#e8d0a0',.1],[-.35,'#b08050',.08],[-.15,'#d4b880',.14],[.05,'#a07040',.1],[.25,'#dcc490',.12],[.45,'#b08858',.09],[.65,'#c4a068',.11]].forEach(([oy,col,h])=>{
+        c.beginPath();c.ellipse(x,y+oy*r,r,r*h,0,0,Math.PI*2);c.fillStyle=col+'aa';c.fill();
+      });
+      c.beginPath();c.ellipse(x+r*.22,y+r*.18,r*.24,r*.15,-.2,0,Math.PI*2);c.fillStyle='#c04828';c.fill();
+      c.beginPath();c.ellipse(x+r*.22,y+r*.18,r*.18,r*.1,-.2,0,Math.PI*2);c.fillStyle='#e05030';c.fill();
+      c.restore();
+    }
   },
-  saturn:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Saturn_during_Equinox.jpg/600px-Saturn_during_Equinox.jpg',
-    color:'#fce070',sym:'♄',label:'SATÜRN',
+  saturn:{color:'#fce070',sym:'♄',label:'SATÜRN',
     diameter:'116,460 km',distance:'1.43B km',
-    fact:'Halkaları buzdan ve kayadan oluşan milyonlarca parçacıktan meydana gelir.',
+    fact:'Halkaları milyarlarca buz ve kaya parçacığından oluşur. Suya konsa yüzer!',
     astro:'Disiplin, sorumluluk, kısıtlamalar ve dersler',
+    draw(c,x,y,r){
+      c.save();c.scale(1,.35);
+      c.beginPath();c.arc(x,y/0.35,r*1.9,Math.PI,Math.PI*2);
+      const rg1=c.createLinearGradient(x-r*1.9,0,x+r*1.9,0);
+      rg1.addColorStop(0,'transparent');rg1.addColorStop(.2,'rgba(210,185,120,.6)');rg1.addColorStop(.45,'rgba(240,215,150,.8)');rg1.addColorStop(.55,'rgba(240,215,150,.8)');rg1.addColorStop(.8,'rgba(210,185,120,.6)');rg1.addColorStop(1,'transparent');
+      c.strokeStyle=rg1;c.lineWidth=r*.28;c.stroke();
+      c.restore();
+      const g=c.createRadialGradient(x-r*.2,y-r*.2,r*.05,x,y,r);
+      g.addColorStop(0,'#f8f0c8');g.addColorStop(.4,'#e8d080');g.addColorStop(.8,'#c0a040');g.addColorStop(1,'#907020');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      c.save();c.scale(1,.35);
+      c.beginPath();c.arc(x,y/0.35,r*1.9,0,Math.PI);
+      const rg2=c.createLinearGradient(x-r*1.9,0,x+r*1.9,0);
+      rg2.addColorStop(0,'transparent');rg2.addColorStop(.2,'rgba(210,185,120,.7)');rg2.addColorStop(.45,'rgba(245,220,155,.9)');rg2.addColorStop(.55,'rgba(245,220,155,.9)');rg2.addColorStop(.8,'rgba(210,185,120,.7)');rg2.addColorStop(1,'transparent');
+      c.strokeStyle=rg2;c.lineWidth=r*.28;c.stroke();c.restore();
+    }
   },
-  uranus:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Uranus2.jpg/600px-Uranus2.jpg',
-    color:'#7fd8f0',sym:'⛢',label:'URANÜS',
+  uranus:{color:'#7fd8f0',sym:'⛢',label:'URANÜS',
     diameter:'50,724 km',distance:'2.87B km',
-    fact:'Yatay eksende döner — güneş ışığını kutuplarından alır, yanlarından değil.',
+    fact:'Yatay eksende döner (98° eğim). Metan atmosferi yüzünden turkuaz renkte görünür.',
     astro:'Özgünlük, devrim, ani değişimler',
+    draw(c,x,y,r){
+      c.save();c.translate(x,y);c.rotate(Math.PI*.15);c.scale(1,0.18);
+      c.beginPath();c.arc(0,0,r*1.6,0,Math.PI*2);c.strokeStyle='rgba(120,210,230,.5)';c.lineWidth=r*.1;c.stroke();
+      c.restore();
+      const g=c.createRadialGradient(x-r*.2,y-r*.2,r*.05,x,y,r);
+      g.addColorStop(0,'#d0f4f8');g.addColorStop(.5,'#70c8e0');g.addColorStop(1,'#308898');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+    }
   },
-  neptune:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Neptune_-_Voyager_2_%2829347980845%29_flatten_crop.jpg/600px-Neptune_-_Voyager_2_%2829347980845%29_flatten_crop.jpg',
-    color:'#c0b0ff',sym:'♆',label:'NEPTÜN',
+  neptune:{color:'#c0b0ff',sym:'♆',label:'NEPTÜN',
     diameter:'49,244 km',distance:'4.5B km',
-    fact:'Güneş sisteminin en güçlü rüzgarlarına ev sahipliği yapar (2,100 km/s).',
+    fact:'Güneş sisteminin en güçlü rüzgarlarına sahip (2,100 km/sa). Triton uydusu geriye doğru döner.',
     astro:'Hayaller, spiritüellik, yanılsamalar',
+    draw(c,x,y,r){
+      const g=c.createRadialGradient(x-r*.2,y-r*.2,r*.05,x,y,r);
+      g.addColorStop(0,'#c0d0ff');g.addColorStop(.4,'#5060d8');g.addColorStop(1,'#1820a0');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      c.beginPath();c.ellipse(x-r*.2,y+r*.1,r*.22,r*.14,-.1,0,Math.PI*2);c.fillStyle='rgba(20,20,100,.6)';c.fill();
+    }
   },
-  pluto:{
-    img:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Pluto_in_True_Color_-_High-Res.jpg/600px-Pluto_in_True_Color_-_High-Res.jpg',
-    color:'#ffc88a',sym:'♇',label:'PLÜTON',
+  pluto:{color:'#ffc88a',sym:'♇',label:'PLÜTON',
     diameter:'2,376 km',distance:'5.9B km',
-    fact:'2006\'da cüce gezegen olarak yeniden sınıflandırıldı. Kalp şeklinde azot buz ovaları içerir.',
+    fact:'2006\'da cüce gezegen olarak sınıflandırıldı. Kalp şeklindeki "Tombaugh Regio" azot buz ovası içerir.',
     astro:'Dönüşüm, güç, yeniden doğuş',
+    draw(c,x,y,r){
+      const g=c.createRadialGradient(x-r*.2,y-r*.2,r*.05,x,y,r);
+      g.addColorStop(0,'#f0d8b0');g.addColorStop(.4,'#c8a060');g.addColorStop(1,'#7a5028');
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      c.save();c.translate(x+r*.1,y+r*.1);c.scale(r*.35,r*.35);
+      c.beginPath();c.moveTo(0,-.3);c.bezierCurveTo(.5,-.8,1,-.3,.5,.2);c.bezierCurveTo(.2,.6,0,.8,0,1);c.bezierCurveTo(0,.8,-.2,.6,-.5,.2);c.bezierCurveTo(-1,-.3,-.5,-.8,0,-.3);
+      c.fillStyle='rgba(255,245,230,.55)';c.fill();c.restore();
+    }
   },
 };
 
@@ -2307,6 +2509,233 @@ function buildSkyPlanetCards(state){
       <div style="font-size:13px;color:var(--silver);margin-top:2px;">${p.sign}</div>
       <div style="font-size:10px;color:${p.natal?'var(--gold)':'var(--purple3)'};margin-top:2px;">${p.natal?'Doğum':'Bugün'}</div>
     </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// COSMOS — NASA APOD + Groq AI Storyteller
+// ═══════════════════════════════════════════════
+const NASA_KEY='DEMO_KEY'; // apod.nasa.gov — ücretsiz, günde 30 istek
+let cosmosDate=new Date();
+let cosmosCache={};
+
+function dateStr(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+async function loadCosmos(offset=0){
+  // offset: 0=today, -1=yesterday, +1=tomorrow
+  const d=new Date(cosmosDate);
+  d.setDate(d.getDate()+offset);
+  // Cap at today
+  if(d>new Date()) return;
+  cosmosDate=d;
+
+  const ds=dateStr(d);
+  if(cosmosCache[ds]){
+    renderCosmos(cosmosCache[ds]);
+    return;
+  }
+
+  document.getElementById('cosmos-loading').style.display='flex';
+  document.getElementById('cosmos-content').style.display='none';
+
+  try{
+    const url=`https://api.nasa.gov/planetary/apod?api_key=${NASA_KEY}&date=${ds}&thumbs=true`;
+    const res=await fetch(url);
+    if(!res.ok)throw new Error('NASA API: '+res.status);
+    const data=await res.json();
+    cosmosCache[ds]=data;
+    renderCosmos(data);
+    // Load archive in background
+    loadCosmosArchive();
+  }catch(e){
+    document.getElementById('cosmos-loading').innerHTML=`
+      <div style="font-size:32px;">🌌</div>
+      <div style="color:var(--dim);font-size:14px;">NASA verisi yüklenemedi</div>
+      <div style="font-size:12px;color:var(--dim2);">${e.message}</div>`;
+  }
+}
+
+function renderCosmos(data){
+  document.getElementById('cosmos-loading').style.display='none';
+  document.getElementById('cosmos-content').style.display='block';
+
+  // Hero
+  const isVideo=data.media_type==='video';
+  const heroEl=document.getElementById('cosmos-hero');
+  const imgEl=document.getElementById('cosmos-img');
+
+  if(isVideo){
+    // For YouTube embeds, show thumbnail
+    const thumb=data.thumbnail_url||'';
+    imgEl.src=thumb||'';
+    imgEl.style.display=thumb?'block':'none';
+    if(!thumb){
+      heroEl.style.background='linear-gradient(135deg,#050410,#1a0a3a)';
+      heroEl.style.display='flex';heroEl.style.alignItems='center';heroEl.style.justifyContent='center';
+    }
+  }else{
+    imgEl.src=data.hdurl||data.url||'';
+    imgEl.style.display='block';
+  }
+
+  // Text
+  const months=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const d=new Date(data.date+'T12:00:00');
+  const dateLabel=d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+  document.getElementById('cosmos-date').textContent='✦ '+dateLabel;
+  document.getElementById('cosmos-title').textContent=data.title||'';
+  document.getElementById('cosmos-credit').textContent=data.copyright?'© '+data.copyright:'NASA / Kamu Malı';
+  document.getElementById('cosmos-original').textContent=data.explanation||'';
+
+  // Next button — hide if today
+  const tomorrow=new Date(cosmosDate);tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('cosmos-next-btn').style.opacity=tomorrow>new Date()?.4:1;
+  document.getElementById('cosmos-next-btn').style.pointerEvents=tomorrow>new Date()?'none':'auto';
+
+  // Facts
+  buildCosmosFactCards(data);
+
+  // AI Story
+  generateCosmosStory(data);
+}
+
+function buildCosmosFactCards(data){
+  const title=data.title||'';
+  const isGalaxy=/(galaxy|nebula|cluster)/i.test(title);
+  const isPlanet=/(mars|jupiter|saturn|venus|mercury|moon|sun|solar)/i.test(title);
+  const isBlackHole=/(black hole|quasar|neutron)/i.test(title);
+
+  const facts=[
+    {icon:'📅',label:'Tarih',text:data.date},
+    {icon:isVideo?'🎬':'📸',label:'Medya Türü',text:isVideo?'NASA Video':'NASA Fotoğrafı'},
+    {icon:isGalaxy?'🌌':isPlanet?'🪐':isBlackHole?'⚫':'⭐',
+     label:'Kategori',
+     text:isGalaxy?'Galaksi/Nebula':isPlanet?'Güneş Sistemi':isBlackHole?'Uzay Fenomeni':'Derin Uzay'},
+    {icon:'🔭',label:'Kaynak',text:data.copyright||'NASA Public Domain'},
+  ];
+
+  document.getElementById('cosmos-facts').innerHTML=facts.map(f=>`
+    <div class="cosmos-fact">
+      <div class="cosmos-fact-icon">${f.icon}</div>
+      <div class="cosmos-fact-label">${f.label}</div>
+      <div class="cosmos-fact-text">${f.text}</div>
+    </div>`).join('');
+}
+
+async function generateCosmosStory(data){
+  const storyEl=document.getElementById('cosmos-story-text');
+  storyEl.innerHTML='<div class="cosmos-loading"><div class="cosmos-spinner"></div><div style="font-size:13px;color:var(--dim);">Kozmik hikaye oluşturuluyor...</div></div>';
+
+  const groqKey=sessionStorage.getItem('velum_groq_key');
+  if(!groqKey||groqKey==='YOUR_GROQ_API_KEY_HERE'){
+    storyEl.innerHTML=buildLocalCosmosStory(data);
+    return;
+  }
+
+  const userName=APP.state?.name||'Kaşif';
+  const userSun=APP.state?.sun||'';
+
+  const prompt=`NASA'nın bugünkü uzay fotoğrafını/verisini sana veriyorum. Sen bunu büyüleyici, merak uyandırıcı bir kozmik hikayeye dönüştüreceksin.
+
+NASA Başlığı: "${data.title}"
+NASA Açıklaması: "${(data.explanation||'').slice(0,600)}"
+Tarih: ${data.date}
+Kullanıcı: ${userName}${userSun?' ('+userSun+' Güneşi)':''}
+
+GÖREVIN — Bu kurallara kesinlikle uy:
+1. Teknik jargon YOK — "ışık yılı" yerine "senin tüm hayatını yaşasan bile oraya varamazsın" gibi metafor kullan
+2. Kullanıcıya DOĞRUDAN hitap et — "Sen şu an bakıyorsun...", "${userName}, düşün bir..."
+3. Bilimsel gerçekleri koru ama anlatıma mistik/felsefi bir hava kat
+4. Kısa tut — maksimum 4-5 cümle, nefes kesen bir akış
+5. Son cümlede kozmosla bir bağ kur — insanlık, varoluş veya merak hakkında
+6. Türkçe yaz, formatlamaya gerek yok — sadece akıcı metin
+7. Başlangıçta "NASA" kelimesini kullanma — sanki sen bunu zaten biliyormuşsun gibi anlat`;
+
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},
+      body:JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        max_tokens:400,
+        messages:[
+          {role:'system',content:'Sen Velum\'un kozmik hikaye anlatıcısısın. Büyüleyici, kısa ve merak uyandırıcı metinler yazarsın. Her zaman Türkçe yaz.'},
+          {role:'user',content:prompt}
+        ]
+      })
+    });
+    const json=await res.json();
+    const story=json.choices?.[0]?.message?.content?.trim()||'';
+    if(story){
+      storyEl.innerHTML=story.replace(/\n/g,'<br>');
+    }else{
+      storyEl.innerHTML=buildLocalCosmosStory(data);
+    }
+  }catch(e){
+    storyEl.innerHTML=buildLocalCosmosStory(data);
+  }
+}
+
+function buildLocalCosmosStory(data){
+  const title=data.title||'Bu görüntü';
+  const ex=data.explanation||'';
+
+  // Extract a compelling sentence from explanation
+  const sentences=ex.split(/\.\s+/);
+  const interesting=sentences.find(s=>s.length>60&&s.length<200)||sentences[0]||'';
+
+  return `<span class="highlight">${title}</span> — evrenin milyarlarca yıldır süregelen sessiz muhteşemliğinin bir anlık karesidir. 
+    ${interesting?interesting+'. ':''}
+    Şu an baktığın bu görüntü, ışığın sonsuz yolculuğunun bir hediyesi. 
+    Ve belki de en etkileyici gerçek şu: <span class="highlight">bu ışık yola çıktığında sen henüz yoktun.</span>`;
+}
+
+async function loadCosmosArchive(){
+  const archiveEl=document.getElementById('cosmos-archive');
+  if(!archiveEl||archiveEl.children.length>0)return;
+
+  const today=new Date();
+  const promises=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(today);d.setDate(d.getDate()-i);
+    const ds=dateStr(d);
+    if(cosmosCache[ds]){promises.push(Promise.resolve(cosmosCache[ds]));}
+    else{
+      promises.push(
+        fetch(`https://api.nasa.gov/planetary/apod?api_key=${NASA_KEY}&date=${ds}&thumbs=true`)
+          .then(r=>r.json()).then(d=>{cosmosCache[ds]=d;return d;}).catch(()=>null)
+      );
+    }
+  }
+
+  const results=await Promise.all(promises);
+  archiveEl.innerHTML=results.map((d,i)=>{
+    if(!d)return'';
+    const thumb=d.thumbnail_url||(d.media_type!=='video'?d.url:'');
+    const ds=d.date;
+    const dayD=new Date(d.date+'T12:00:00');
+    const label=dayD.getDate()+'/'+(dayD.getMonth()+1);
+    return`<div class="cosmos-archive-item ${i===0?'active':''}" onclick="loadCosmosFromCache('${ds}')">
+      <img class="cosmos-archive-img" src="${thumb||''}" alt="${d.title||''}" 
+        onerror="this.style.background='#1a0a3a';this.style.display='block';" loading="lazy"/>
+      <div class="cosmos-archive-date">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+function loadCosmosFromCache(ds){
+  document.querySelectorAll('.cosmos-archive-item').forEach(el=>el.classList.remove('active'));
+  event?.target?.closest('.cosmos-archive-item')?.classList.add('active');
+  if(cosmosCache[ds]){
+    cosmosDate=new Date(ds+'T12:00:00');
+    renderCosmos(cosmosCache[ds]);
+  }
+}
+
+function initCosmos(){
+  cosmosDate=new Date();
+  loadCosmos(0);
 }
 
 // ═══════════════════════════════════════════════
