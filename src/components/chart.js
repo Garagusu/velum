@@ -12,8 +12,9 @@ const ChartRenderer = (() => {
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
 
-    // Set logical size
-    const logicalSize = Math.min(canvas.parentElement.clientWidth, 480);
+    // Set logical size — fallback to 480 if parent not yet laid out
+    const parentWidth = canvas.parentElement?.clientWidth || 480;
+    const logicalSize = Math.max(200, Math.min(parentWidth, 480));
     canvas.style.width  = logicalSize + 'px';
     canvas.style.height = logicalSize + 'px';
     canvas.width  = logicalSize * dpr;
