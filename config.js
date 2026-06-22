@@ -1,3 +1,1 @@
-const CONFIG = {
-  GROQ_API_KEY: null
-};
+const CONFIG = { GROQ_API_KEY: null };
