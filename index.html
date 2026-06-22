@@ -964,15 +964,27 @@ window.addEventListener('unhandledrejection', function(e){
   }
 });
 
-// Safe loader for external scripts
-function loadScript(src, cb){
-  const s=document.createElement('script');
-  s.src=src;
-  s.onload=()=>{if(cb)cb(null);};
-  s.onerror=()=>{console.warn('Script load failed:',src);if(cb)cb(new Error('failed'));};
-  document.head.appendChild(s);
+// VirtualSky scripts loaded lazily when sky page opens
+window._skyScriptsLoaded = false;
+window._skyScriptsLoading = false;
+// Load from GitHub raw (repo files may 403 on GitHub Pages)
+const _VSBASE = 'https://raw.githubusercontent.com/slowe/VirtualSky/master/';
+function loadSkyScripts(cb){
+  if(window._skyScriptsLoaded){ cb(); return; }
+  if(window._skyScriptsLoading){ setTimeout(()=>loadSkyScripts(cb), 300); return; }
+  window._skyScriptsLoading = true;
+  const s1=document.createElement('script');
+  s1.src=_VSBASE+'stuquery.js';
+  s1.onload=()=>{
+    const s2=document.createElement('script');
+    s2.src=_VSBASE+'virtualsky.min.js';
+    s2.onload=()=>{ window._skyScriptsLoaded=true; window._skyScriptsLoading=false; cb(); };
+    s2.onerror=()=>{ window._skyScriptsLoading=false; showSkyFallback(); };
+    document.head.appendChild(s2);
+  };
+  s1.onerror=()=>{ window._skyScriptsLoading=false; showSkyFallback(); };
+  document.head.appendChild(s1);
 }
-loadScript('stuquery.js', ()=>loadScript('virtualsky.min.js', ()=>{}));
 </script>
 <script>
 // ═══════════════════════════════════════════════
@@ -1332,8 +1344,6 @@ function lunarPhase(dateStr){
 const APP={state:null};
 
 document.addEventListener('DOMContentLoaded',()=>{
-  const panel=document.getElementById('debug-panel');
-  if(panel) panel.innerHTML+='<div>✓ DOMContentLoaded fired</div>';
   try{
   bindNav();
   document.getElementById('create-chart-btn').addEventListener('click',createChart);
@@ -1364,10 +1374,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('[data-navigate]').forEach(el=>{
     el.addEventListener('click',()=>showPage(el.dataset.navigate));
   });
-  const panel2=document.getElementById('debug-panel');
-  if(panel2) panel2.innerHTML+='<div>✓ Listeners bound, calling loadSaved...</div>';
   loadSaved();
-  if(panel2) panel2.innerHTML+='<div>✓ loadSaved done</div>';
   } catch(e) {
     const panel=document.getElementById('debug-panel');
     if(panel){ panel.style.display='block'; panel.innerHTML+='<div>❌ INIT ERROR: '+e.message+' line:'+e.stack?.split('\n')[1]+'</div>'; }
@@ -2528,8 +2535,11 @@ function selectPlanet(key,s){
 let skyNow=null, skyBirth=null;
 
 function initSkyMap(state){
+  // Load scripts on demand
+  loadSkyScripts(()=>_initSkyMapReal(state));
+}
+function _initSkyMapReal(state){
   if(typeof S==='undefined'||typeof S.virtualsky==='undefined'){
-    console.warn('VirtualSky: stuQuery(S) not loaded');
     showSkyFallback();
     return;
   }
