@@ -635,6 +635,7 @@ nav{
   </div>
 </div>
 
+<script src="stuquery.js"></script>
 <script src="virtualsky.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════
@@ -1138,108 +1139,243 @@ function getTodayText(s,activePlanet,phase){
 // ═══════════════════════════════════════════════
 function buildChart(s){
   const canvas=document.getElementById('birth-chart');
+  if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   const parent=canvas.parentElement;
-  const size=Math.max(200,Math.min(parent?.clientWidth||400,420));
+  const size=Math.max(240,Math.min(parent?.clientWidth||420,480));
   canvas.style.width=size+'px'; canvas.style.height=size+'px';
   canvas.width=size*dpr; canvas.height=size*dpr;
   ctx.scale(dpr,dpr);
-  const W=size,H=size,cx=W/2,cy=H/2,R=W/2-18;
+  const W=size,H=size,cx=W/2,cy=H/2;
+  const Ro=W/2-10;   // outer wheel edge
+  const Rz=Ro*.88;   // zodiac band outer
+  const Rzi=Ro*.72;  // zodiac band inner
+  const Rh=Ro*.68;   // house ring outer
+  const Rhi=Ro*.30;  // house ring inner (center)
 
   ctx.clearRect(0,0,W,H);
-  // bg
-  const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,R);
-  bg.addColorStop(0,'rgba(22,10,60,.97)');
-  bg.addColorStop(1,'rgba(8,4,28,.92)');
-  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();
 
-  // rings
-  [.9,.72,.52,.32].forEach((f,i)=>{
-    ctx.beginPath();ctx.arc(cx,cy,R*f,0,Math.PI*2);
-    ctx.strokeStyle=i===0?'rgba(139,92,246,.35)':'rgba(139,92,246,.12)';
-    ctx.lineWidth=i===0?1:.5;ctx.stroke();
-  });
+  // ── Deep space background ──────────────────────
+  const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Ro);
+  bg.addColorStop(0,'rgba(18,8,45,.99)');
+  bg.addColorStop(.6,'rgba(10,5,28,.99)');
+  bg.addColorStop(1,'rgba(5,2,15,.99)');
+  ctx.beginPath();ctx.arc(cx,cy,Ro,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();
 
-  // house lines
+  // tiny background stars inside wheel
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,Rzi,0,Math.PI*2);ctx.clip();
+  for(let i=0;i<80;i++){
+    const sx=cx+(Math.random()-.5)*Rzi*2;
+    const sy=cy+(Math.random()-.5)*Rzi*2;
+    if(Math.hypot(sx-cx,sy-cy)>Rzi)continue;
+    const sr=Math.random()*.8+.15;
+    ctx.fillStyle=`rgba(220,230,255,${Math.random()*.35+.05})`;
+    ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+
+  // ── Zodiac band (outer ring) ────────────────────
+  const ELEMENT_COLORS={
+    fire:'rgba(255,120,60,.18)',earth:'rgba(100,200,100,.14)',
+    air:'rgba(100,180,255,.14)',water:'rgba(80,120,255,.18)'
+  };
+  const SIGN_ELEMENTS=['fire','earth','air','water','fire','earth','air','water','fire','earth','air','water'];
+
+  // Colored zodiac segments
   for(let i=0;i<12;i++){
-    const a=(i*30-90)*Math.PI/180;
-    const isCusp=i%3===0;
+    const startA=(i*30-90)*Math.PI/180;
+    const endA=((i+1)*30-90)*Math.PI/180;
+    const el=SIGN_ELEMENTS[i];
     ctx.beginPath();
-    ctx.moveTo(cx+R*.32*Math.cos(a),cy+R*.32*Math.sin(a));
-    ctx.lineTo(cx+R*.9*Math.cos(a),cy+R*.9*Math.sin(a));
-    ctx.strokeStyle=isCusp?'rgba(200,168,75,.4)':'rgba(139,92,246,.1)';
-    ctx.lineWidth=isCusp?1:.4;ctx.stroke();
+    ctx.moveTo(cx+Rz*Math.cos(startA),cy+Rz*Math.sin(startA));
+    ctx.arc(cx,cy,Rz,startA,endA);
+    ctx.arc(cx,cy,Rzi,endA,startA,true);
+    ctx.closePath();
+    ctx.fillStyle=ELEMENT_COLORS[el];
+    ctx.fill();
+    // segment border
+    ctx.strokeStyle='rgba(139,92,246,.25)';ctx.lineWidth=.5;ctx.stroke();
   }
 
-  // zodiac symbols
+  // Zodiac outer/inner ring borders
+  [Rz,Rzi].forEach(r=>{
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle='rgba(139,92,246,.45)';ctx.lineWidth=1;ctx.stroke();
+  });
+
+  // Zodiac symbols
   const startIdx=s.ascIdx;
-  SYMS.forEach((sym,i)=>{
+  for(let i=0;i<12;i++){
     const si=(startIdx+i)%12;
     const a=(i*30+15-90)*Math.PI/180;
-    const r=R*.81;
-    ctx.font=`${Math.max(11,R*.036)}px serif`;
-    ctx.fillStyle='rgba(164,148,240,.75)';
+    const r=(Rz+Rzi)/2;
+    const x=cx+r*Math.cos(a),y=cy+r*Math.sin(a);
+    // symbol bg glow
+    const g=ctx.createRadialGradient(x,y,0,x,y,12);
+    g.addColorStop(0,'rgba(139,92,246,.12)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();
+    // symbol
+    ctx.font=`${Math.max(12,Ro*.042)}px serif`;
+    ctx.fillStyle='rgba(196,181,253,.88)';
     ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(SYMS[si],cx+r*Math.cos(a),cy+r*Math.sin(a));
-  });
+    ctx.fillText(SYMS[si],x,y);
+  }
 
-  // planets
-  const allPlanets=[
-    {key:'sun',name:'Güneş',symbol:'☉',signIdx:s.sunIdx,deg:s.sunDeg,color:'#e8c870'},
-    {key:'moon',name:'Ay',symbol:'☽',signIdx:s.moonIdx,deg:s.moonDeg,color:'#c8d8e8'},
-    {key:'asc',name:'Yükselen',symbol:'↑',signIdx:s.ascIdx,deg:s.ascDeg,color:'#b494f0'},
-    ...(s.planets||[]).map((p,i)=>({...p,color:['#6ee7b7','#f9a8d4','#fca5a5','#86efac','#fde68a','#a5f3fc','#ddd6fe','#fed7aa'][i%8]})),
+  // Degree tick marks on zodiac outer edge
+  for(let d=0;d<360;d+=5){
+    const a=(d-90)*Math.PI/180;
+    const isMajor=d%30===0;
+    const r1=Rz-(isMajor?8:4);
+    ctx.beginPath();
+    ctx.moveTo(cx+Rz*Math.cos(a),cy+Rz*Math.sin(a));
+    ctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
+    ctx.strokeStyle=isMajor?'rgba(200,168,75,.5)':'rgba(139,92,246,.2)';
+    ctx.lineWidth=isMajor?.8:.3;ctx.stroke();
+  }
+
+  // ── House cusps ────────────────────────────────
+  const ANGULAR_HOUSES=[0,3,6,9]; // 1,4,7,10 houses — most important
+  for(let i=0;i<12;i++){
+    const a=(i*30-90)*Math.PI/180;
+    const isAngular=ANGULAR_HOUSES.includes(i);
+    ctx.beginPath();
+    ctx.moveTo(cx+Rhi*Math.cos(a),cy+Rhi*Math.sin(a));
+    ctx.lineTo(cx+Rzi*Math.cos(a),cy+Rzi*Math.sin(a));
+    ctx.strokeStyle=isAngular?'rgba(200,168,75,.55)':'rgba(139,92,246,.18)';
+    ctx.lineWidth=isAngular?1.2:.5;ctx.stroke();
+    // House numbers
+    const hn=i+1;
+    const ha=(i*30+15-90)*Math.PI/180;
+    const hr=(Rzi+Rhi)*.52;
+    ctx.font=`${Math.max(8,Ro*.024)}px sans-serif`;
+    ctx.fillStyle='rgba(139,92,246,.45)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(hn,cx+hr*Math.cos(ha),cy+hr*Math.sin(ha));
+  }
+
+  // Inner house ring border
+  ctx.beginPath();ctx.arc(cx,cy,Rhi,0,Math.PI*2);
+  ctx.strokeStyle='rgba(139,92,246,.3)';ctx.lineWidth=.8;ctx.stroke();
+
+  // ── Build all planets ──────────────────────────
+  const PDATA=[
+    {key:'sun',  name:'Güneş',   sym:'☉', si:s.sunIdx,  deg:s.sunDeg,  col:'#f0c040',sz:16},
+    {key:'moon', name:'Ay',      sym:'☽', si:s.moonIdx, deg:s.moonDeg, col:'#dce8f8',sz:15},
+    {key:'asc',  name:'Yükselen',sym:'AC',si:s.ascIdx,  deg:s.ascDeg,  col:'#c4b5fd',sz:12},
+    ...(s.planets||[]).map((p,i)=>({
+      key:p.key,name:p.name,sym:p.symbol,si:p.signIdx,deg:p.deg,
+      col:['#5eefc8','#f8a4d0','#f87070','#8fef9f','#fce070','#7fd8f0','#c0b0ff','#ffc88a'][i%8],
+      sz:12
+    })),
   ];
 
-  // aspect lines
-  const aspColors=[[0,3,'rgba(134,239,172,.28)'],[1,5,'rgba(200,216,232,.18)'],[0,4,'rgba(232,200,112,.22)'],[2,6,'rgba(252,165,165,.18)']];
-  const radii=[.60,.55,.65,.58,.62,.56,.63,.57,.61,.59,.64];
-  aspColors.forEach(([ai,bi,col])=>{
-    if(!allPlanets[ai]||!allPlanets[bi])return;
-    const pA=allPlanets[ai],pB=allPlanets[bi];
-    const angA=(pA.signIdx*30+pA.deg-90)*Math.PI/180;
-    const angB=(pB.signIdx*30+pB.deg-90)*Math.PI/180;
-    const rA=R*radii[ai%radii.length],rB=R*radii[bi%radii.length];
-    ctx.beginPath();
-    ctx.moveTo(cx+rA*Math.cos(angA),cy+rA*Math.sin(angA));
-    ctx.lineTo(cx+rB*Math.cos(angB),cy+rB*Math.sin(angB));
-    ctx.strokeStyle=col;ctx.lineWidth=.7;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);
-  });
+  // Smart radial placement — avoid overlap
+  const ORBIT_RINGS=[.54,.59,.64,.49,.585,.545,.615,.56,.57,.58,.60,.53,.615];
+  const hitAreas=[];
 
-  // planet glyphs + click areas
-  allPlanets._hitAreas=[];
-  allPlanets.forEach((p,i)=>{
-    const angle=(p.signIdx*30+p.deg-90)*Math.PI/180;
-    const r=R*radii[i%radii.length];
+  // ── Aspect lines first (behind planets) ────────
+  const ASPECT_DEFS=[
+    {angle:0,  col:'rgba(255,220,80,.35)', dash:[],    label:'Kavuşum'},
+    {angle:60, col:'rgba(80,240,160,.30)', dash:[4,4], label:'Sextil'},
+    {angle:90, col:'rgba(255,100,100,.28)',dash:[2,4], label:'Kare'},
+    {angle:120,col:'rgba(80,240,160,.38)', dash:[],    label:'Üçgen'},
+    {angle:180,col:'rgba(200,140,255,.30)',dash:[1,3], label:'Karşıt'},
+  ];
+
+  for(let ai=0;ai<PDATA.length;ai++){
+    for(let bi=ai+1;bi<Math.min(PDATA.length,8);bi++){
+      const pA=PDATA[ai],pB=PDATA[bi];
+      const degA=pA.si*30+pA.deg;
+      const degB=pB.si*30+pB.deg;
+      let diff=Math.abs(degA-degB);
+      if(diff>180)diff=360-diff;
+      const asp=ASPECT_DEFS.find(a=>Math.abs(diff-a.angle)<8);
+      if(!asp)continue;
+      const rA=Rhi*.9,rB=Rhi*.9;
+      const angA=(degA-90)*Math.PI/180;
+      const angB=(degB-90)*Math.PI/180;
+      ctx.beginPath();
+      ctx.moveTo(cx+rA*Math.cos(angA),cy+rA*Math.sin(angA));
+      ctx.lineTo(cx+rB*Math.cos(angB),cy+rB*Math.sin(angB));
+      ctx.strokeStyle=asp.col;ctx.lineWidth=.8;
+      ctx.setLineDash(asp.dash);ctx.stroke();ctx.setLineDash([]);
+    }
+  }
+
+  // ── Draw planets ───────────────────────────────
+  PDATA.forEach((p,i)=>{
+    const totalDeg=p.si*30+p.deg;
+    const angle=(totalDeg-90)*Math.PI/180;
+    const r=Rhi*ORBIT_RINGS[i%ORBIT_RINGS.length];
     const x=cx+r*Math.cos(angle),y=cy+r*Math.sin(angle);
-    allPlanets._hitAreas=allPlanets._hitAreas||[];
-    allPlanets._hitAreas.push({x,y,r:12,planet:p});
+    hitAreas.push({x,y,r:14,planet:p});
 
-    const halo=ctx.createRadialGradient(x,y,0,x,y,11);
-    halo.addColorStop(0,p.color+'44');halo.addColorStop(1,'transparent');
-    ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fillStyle=halo;ctx.fill();
-    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=p.color+'99';ctx.fill();
-    ctx.font=`bold ${Math.max(10,R*.03)}px serif`;
-    ctx.fillStyle=p.color;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(p.symbol,x,y);
+    // Outer glow
+    const glowR=p.sz+10;
+    const glow=ctx.createRadialGradient(x,y,0,x,y,glowR);
+    glow.addColorStop(0,p.col+'55');glow.addColorStop(1,'transparent');
+    ctx.fillStyle=glow;ctx.beginPath();ctx.arc(x,y,glowR,0,Math.PI*2);ctx.fill();
+
+    // Planet body — circle with gradient
+    const bodyGrad=ctx.createRadialGradient(x-p.sz*.3,y-p.sz*.3,0,x,y,p.sz*.85);
+    bodyGrad.addColorStop(0,'rgba(255,255,255,.9)');
+    bodyGrad.addColorStop(.35,p.col);
+    bodyGrad.addColorStop(1,p.col+'88');
+    ctx.beginPath();ctx.arc(x,y,p.sz*.85,0,Math.PI*2);
+    ctx.fillStyle=bodyGrad;ctx.fill();
+    ctx.strokeStyle=p.col;ctx.lineWidth=1;ctx.stroke();
+
+    // Symbol
+    ctx.font=`bold ${Math.max(8,p.sz*.75)}px serif`;
+    ctx.fillStyle='rgba(5,3,15,.85)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(p.sym,x,y);
+
+    // Degree label on the wheel edge
+    const labelR=Rzi-5;
+    const lx=cx+labelR*Math.cos(angle),ly=cy+labelR*Math.sin(angle);
+    ctx.font=`${Math.max(7,Ro*.02)}px sans-serif`;
+    ctx.fillStyle=p.col+'cc';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`${p.deg}°`,lx,ly);
+
+    // Thin line from planet to zodiac edge
+    ctx.beginPath();
+    ctx.moveTo(x+Math.cos(angle)*(p.sz*.9),y+Math.sin(angle)*(p.sz*.9));
+    ctx.lineTo(cx+(Rzi-2)*Math.cos(angle),cy+(Rzi-2)*Math.sin(angle));
+    ctx.strokeStyle=p.col+'44';ctx.lineWidth=.5;ctx.stroke();
   });
 
-  // center
-  ctx.font=`${Math.max(16,R*.055)}px serif`;
-  ctx.fillStyle='rgba(200,168,75,.5)';
-  ctx.textAlign='center';ctx.textBaseline='middle';
+  // ── Center mandala ─────────────────────────────
+  // Decorative inner rings
+  [.28,.22,.16].forEach((f,i)=>{
+    ctx.beginPath();ctx.arc(cx,cy,Rhi*f,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(139,92,246,${.15+i*.05})`;ctx.lineWidth=.5;ctx.stroke();
+  });
+  // Center star
+  ctx.font=`${Math.max(18,Ro*.065)}px serif`;
+  const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,20);
+  cg.addColorStop(0,'rgba(200,168,75,.9)');cg.addColorStop(1,'rgba(200,168,75,.2)');
+  ctx.fillStyle=cg;ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('✦',cx,cy);
 
-  // click handler
-  canvas._planets=allPlanets;
+  // ── Ascendant marker ────────────────────────────
+  const ascA=(s.ascIdx*30+s.ascDeg-90)*Math.PI/180;
+  ctx.beginPath();
+  ctx.moveTo(cx+Rzi*Math.cos(ascA),cy+Rzi*Math.sin(ascA));
+  ctx.lineTo(cx+(Rzi+8)*Math.cos(ascA),cy+(Rzi+8)*Math.sin(ascA));
+  ctx.strokeStyle='rgba(200,168,75,.9)';ctx.lineWidth=2;ctx.stroke();
+
+  // ── Click handler ──────────────────────────────
   canvas.onclick=function(e){
     const rect=canvas.getBoundingClientRect();
-    const scaleX=size/(rect.width);
-    const mx=(e.clientX-rect.left)*scaleX;
-    const my=(e.clientY-rect.top)*scaleX;
-    for(const hit of(allPlanets._hitAreas||[])){
-      if(Math.hypot(mx-hit.x,my-hit.y)<hit.r+6){
+    const sc=size/rect.width;
+    const mx=(e.clientX-rect.left)*sc;
+    const my=(e.clientY-rect.top)*sc;
+    for(const hit of hitAreas){
+      if(Math.hypot(mx-hit.x,my-hit.y)<hit.r+4){
         showPlanetDetail(hit.planet,s);
         document.querySelectorAll('.planet-card').forEach(c=>c.classList.remove('active'));
         document.querySelector(`.planet-card[data-key="${hit.planet.key}"]`)?.classList.add('active');
@@ -1247,14 +1383,17 @@ function buildChart(s){
       }
     }
   };
+  canvas.style.cursor='pointer';
 
-  // planet grid
-  document.getElementById('planets-grid').innerHTML=allPlanets.map(p=>`
-    <div class="planet-card" data-key="${p.key}" onclick="showPlanetDetail(${JSON.stringify(p).replace(/"/g,'&quot;')},APP.state)">
-      <div class="pc-symbol">${p.symbol}</div>
+  // ── Planet grid cards ──────────────────────────
+  document.getElementById('planets-grid').innerHTML=PDATA.map(p=>`
+    <div class="planet-card" data-key="${p.key}"
+      onclick="showPlanetDetail(${JSON.stringify({key:p.key,name:p.name,symbol:p.sym,sign:SIGNS[p.si],signIdx:p.si,deg:p.deg,color:p.col}).replace(/"/g,'&quot;')},APP.state)"
+      style="border-color:${p.col}22;">
+      <div class="pc-symbol" style="color:${p.col}">${p.sym}</div>
       <div class="pc-name">${p.name}</div>
-      <div class="pc-sign">${p.sign||SIGNS[p.signIdx]}</div>
-      <div class="pc-deg">${p.deg}°</div>
+      <div class="pc-sign">${SIGNS[p.si]}</div>
+      <div class="pc-deg" style="color:${p.col}aa">${p.deg}°</div>
     </div>`).join('');
 }
 
