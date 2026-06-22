@@ -1,325 +1,1413 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VELUM — Kişisel Astroloji Platformu</title>
-  <link rel="stylesheet" href="src/styles/main.css" />
-  <link rel="stylesheet" href="src/styles/chart.css" />
-  <link rel="stylesheet" href="src/styles/chat.css" />
-  <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VELUM — Kişisel Evren Rehberin</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#05040f;
+  --bg2:#0a091e;
+  --bg3:#0f0e28;
+  --card:#12102a;
+  --card2:#161430;
+  --border:rgba(139,92,246,.18);
+  --border2:rgba(139,92,246,.35);
+  --gold:#c8a84b;
+  --gold2:#e8c870;
+  --purple:#8b5cf6;
+  --purple2:#a78bfa;
+  --purple3:#c4b5fd;
+  --teal:#2dd4bf;
+  --pink:#f472b6;
+  --silver:#c8d8e8;
+  --dim:rgba(200,216,232,.55);
+  --dim2:rgba(200,216,232,.32);
+  --r:14px;--r2:20px;--r3:50px;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--silver);font-family:'Georgia',serif;min-height:100dvh;overflow-x:hidden;}
+
+/* ── CANVAS ── */
+#galaxy-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* ── LAYOUT ── */
+.app{position:relative;z-index:1;}
+
+/* ── NAV ── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.875rem 1.5rem;
+  background:rgba(5,4,15,.85);backdrop-filter:blur(20px);
+  border-bottom:.5px solid var(--border);
+  position:sticky;top:0;z-index:100;
+}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;letter-spacing:3px;color:var(--gold2);cursor:pointer;user-select:none;}
+.nav-tabs{display:flex;gap:3px;flex-wrap:wrap;}
+.nav-tab{padding:6px 13px;border-radius:20px;font-size:12px;cursor:pointer;color:var(--dim);border:none;background:transparent;font-family:inherit;letter-spacing:.4px;transition:all .18s;white-space:nowrap;}
+.nav-tab:hover{color:var(--silver);background:rgba(139,92,246,.1);}
+.nav-tab.active{background:rgba(139,92,246,.2);color:var(--purple3);border:.5px solid var(--border2);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--gold));display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;flex-shrink:0;transition:transform .18s;}
+.nav-avatar:hover{transform:scale(1.08);}
+
+/* ── PAGES ── */
+.page{display:none;padding:1.5rem;max-width:960px;margin:0 auto;animation:fadeUp .3s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── ONBOARDING ── */
+.onboard{min-height:92dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem 1rem;}
+.orb-wrap{position:relative;width:140px;height:140px;margin-bottom:2rem;}
+.orb{width:140px;height:140px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--purple3),var(--purple) 50%,#2d0a6e);animation:orb-pulse 3s ease-in-out infinite;display:flex;align-items:center;justify-content:center;font-size:54px;}
+.orb-ring{position:absolute;inset:-12px;border-radius:50%;border:.5px solid rgba(139,92,246,.3);animation:ring-spin 12s linear infinite;}
+.orb-ring2{position:absolute;inset:-24px;border-radius:50%;border:.5px solid rgba(200,168,75,.2);animation:ring-spin 20s linear infinite reverse;}
+@keyframes orb-pulse{0%,100%{box-shadow:0 0 60px rgba(139,92,246,.4),0 0 120px rgba(139,92,246,.15);}50%{box-shadow:0 0 80px rgba(139,92,246,.65),0 0 160px rgba(139,92,246,.25);}}
+@keyframes ring-spin{to{transform:rotate(360deg);}}
+.onboard-title{font-size:36px;color:var(--gold2);letter-spacing:8px;margin-bottom:.5rem;}
+.onboard-sub{font-size:15px;color:var(--dim);line-height:1.75;max-width:400px;margin-bottom:2.5rem;}
+
+.form-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r2);padding:2rem;width:100%;max-width:500px;text-align:left;}
+.form-title{font-size:16px;color:var(--silver);margin-bottom:1.5rem;text-align:center;letter-spacing:1px;}
+.form-group{margin-bottom:1.1rem;}
+.form-label{display:block;font-size:11px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.45rem;font-family:inherit;}
+.form-input{width:100%;padding:11px 15px;background:rgba(139,92,246,.07);border:.5px solid var(--border);border-radius:var(--r);color:var(--silver);font-size:14px;font-family:inherit;outline:none;transition:border-color .18s,background .18s;-webkit-appearance:none;}
+.form-input:focus{border-color:var(--purple);background:rgba(139,92,246,.12);}
+.form-input::placeholder{color:var(--dim2);}
+.form-input[type="date"],.form-input[type="time"]{color-scheme:dark;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-hint{font-size:11px;color:var(--dim2);margin-top:5px;}
+.form-hint a{color:var(--purple2);}
+.btn-cosmic{width:100%;padding:14px;background:linear-gradient(135deg,var(--purple),#4c1d95);border:none;border-radius:var(--r);color:#fff;font-size:15px;font-family:inherit;letter-spacing:1px;cursor:pointer;transition:transform .18s,box-shadow .18s;margin-top:.5rem;}
+.btn-cosmic:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(139,92,246,.4);}
+.btn-cosmic:active{transform:translateY(0);}
+
+/* ── SECTION TITLE ── */
+.sec-title{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;}
+
+/* ── DASHBOARD ── */
+.greeting{margin-bottom:1.5rem;}
+.greeting-small{font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
+.greeting-name{font-size:28px;color:var(--gold2);margin-top:5px;}
+
+/* Today hero */
+.today-hero{
+  background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(76,29,149,.08));
+  border:.5px solid var(--border2);border-radius:var(--r2);
+  padding:1.75rem;margin-bottom:1.5rem;position:relative;overflow:hidden;
+}
+.today-hero::before{content:'';position:absolute;top:-40%;right:-5%;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(200,168,75,.06) 0%,transparent 70%);pointer-events:none;}
+.today-hero-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.75rem;}
+.today-hero-title{font-size:20px;color:#fff;margin-bottom:.75rem;line-height:1.4;}
+.today-hero-text{font-size:14px;color:var(--dim);line-height:1.8;}
+.today-pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:1rem;}
+.pill{padding:4px 13px;border-radius:20px;font-size:11px;background:rgba(139,92,246,.12);border:.5px solid rgba(139,92,246,.3);color:var(--purple3);}
+.pill.gold{background:rgba(200,168,75,.1);border-color:rgba(200,168,75,.3);color:var(--gold2);}
+.pill.teal{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.3);color:var(--teal);}
+.pill.pink{background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.3);color:var(--pink);}
+
+/* Moon phase widget */
+.moon-widget{background:var(--card);border:.5px solid var(--border);border-radius:var(--r2);padding:1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.25rem;}
+.moon-symbol{font-size:48px;line-height:1;flex-shrink:0;}
+.moon-info-title{font-size:15px;color:var(--silver);margin-bottom:4px;}
+.moon-info-text{font-size:13px;color:var(--dim);line-height:1.65;}
+
+/* Cards grid */
+.cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:1.5rem;}
+.cards-grid.four{grid-template-columns:repeat(4,1fr);}
+.cosmic-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.1rem;cursor:pointer;transition:border-color .18s,transform .18s;}
+.cosmic-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.card-icon{font-size:22px;margin-bottom:.65rem;line-height:1;}
+.card-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem;}
+.card-value{font-size:17px;color:var(--silver);}
+.card-sub{font-size:11px;color:var(--dim2);margin-top:3px;}
+
+/* Transit list */
+.transit-list{display:flex;flex-direction:column;gap:9px;margin-bottom:1.5rem;}
+.transit-item{display:flex;align-items:flex-start;gap:13px;background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem 1.1rem;}
+.transit-sym{font-size:20px;width:32px;flex-shrink:0;line-height:1.2;}
+.transit-body{flex:1;}
+.transit-title{font-size:13px;color:var(--silver);margin-bottom:3px;}
+.transit-text{font-size:12px;color:var(--dim);line-height:1.6;}
+.transit-badge{font-size:10px;padding:3px 9px;border-radius:10px;background:rgba(200,168,75,.12);border:.5px solid rgba(200,168,75,.3);color:var(--gold);white-space:nowrap;flex-shrink:0;}
+.transit-badge.hard{background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.3);color:var(--pink);}
+.transit-badge.soft{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.3);color:var(--teal);}
+
+/* ── BIRTH CHART PAGE ── */
+.chart-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;}
+.chart-canvas-wrap{display:flex;justify-content:center;}
+#birth-chart{display:block;width:100%;max-width:420px;height:auto;border-radius:50%;cursor:pointer;}
+.planet-detail-panel{background:var(--card);border:.5px solid var(--border);border-radius:var(--r2);padding:1.5rem;min-height:300px;}
+.pd-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:250px;color:var(--dim2);font-size:13px;text-align:center;gap:.5rem;}
+.pd-symbol{font-size:52px;margin-bottom:.5rem;}
+.pd-name{font-size:18px;color:var(--silver);margin-bottom:.25rem;}
+.pd-sign{font-size:14px;color:var(--purple3);margin-bottom:1rem;}
+.pd-section{margin-bottom:1rem;}
+.pd-section-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem;}
+.pd-text{font-size:13px;color:var(--dim);line-height:1.7;}
+.pd-tag{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;margin:2px;background:rgba(139,92,246,.12);border:.5px solid var(--border);color:var(--purple3);}
+.pd-tag.green{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.3);color:var(--teal);}
+.pd-tag.red{background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.3);color:var(--pink);}
+
+.planets-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:1.25rem;}
+.planet-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem;text-align:center;cursor:pointer;transition:all .18s;}
+.planet-card:hover,.planet-card.active{border-color:var(--border2);transform:translateY(-2px);background:var(--card2);}
+.planet-card.active{border-color:var(--purple);}
+.pc-symbol{font-size:22px;margin-bottom:5px;}
+.pc-name{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.pc-sign{font-size:13px;color:var(--silver);}
+.pc-deg{font-size:11px;color:var(--dim2);margin-top:2px;}
+
+/* ── FORECAST ── */
+.forecast-tabs{display:flex;gap:7px;margin-bottom:1.5rem;flex-wrap:wrap;}
+.f-tab{padding:7px 16px;border-radius:20px;font-size:12px;border:.5px solid var(--border);cursor:pointer;background:transparent;color:var(--dim);font-family:inherit;transition:all .18s;}
+.f-tab.active{background:rgba(139,92,246,.2);color:var(--purple3);border-color:var(--border2);}
+.f-tab:hover:not(.active){color:var(--silver);}
+.f-content{display:none;}
+.f-content.active{display:block;animation:fadeUp .2s ease;}
+.f-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:11px;}
+.f-card-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:.65rem;}
+.f-text{font-size:13px;color:var(--dim);line-height:1.8;}
+.energy-bar{margin-top:.85rem;}
+.energy-label{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-bottom:5px;}
+.energy-track{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;}
+.energy-fill{height:100%;border-radius:4px;transition:width 1.2s ease;}
+.energy-fill.g{background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.energy-fill.p{background:linear-gradient(90deg,var(--purple),var(--purple3));}
+.energy-fill.t{background:linear-gradient(90deg,var(--teal),#67e8f9);}
+.tl-item{display:flex;gap:14px;padding:10px 0;border-bottom:.5px solid rgba(139,92,246,.08);}
+.tl-item:last-child{border-bottom:none;}
+.tl-date{min-width:72px;font-size:11px;color:var(--gold);}
+.tl-event{font-size:12px;color:var(--silver);line-height:1.55;}
+.tl-type{font-size:10px;color:var(--dim2);margin-top:2px;}
+
+/* ── SYNASTRY ── */
+.synastry-form{background:var(--card);border:.5px solid var(--border);border-radius:var(--r2);padding:1.5rem;margin-bottom:1.5rem;}
+.syn-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.syn-person-title{font-size:13px;color:var(--purple3);margin-bottom:.75rem;letter-spacing:.5px;}
+.syn-result{display:none;}
+.syn-result.show{display:block;animation:fadeUp .3s ease;}
+.compat-score{text-align:center;padding:1.5rem 0;}
+.compat-num{font-size:56px;color:var(--gold2);line-height:1;}
+.compat-label{font-size:12px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-top:.5rem;}
+.compat-bar{height:6px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin:.75rem 0;}
+.compat-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--gold));border-radius:4px;transition:width 1.5s ease;}
+.aspects-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:1rem;}
+.aspect-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem;}
+.aspect-title{font-size:12px;color:var(--silver);margin-bottom:4px;}
+.aspect-text{font-size:11px;color:var(--dim);line-height:1.55;}
+
+/* ── PERSONALITY ── */
+.personality-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:1.5rem;}
+.pers-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.1rem;}
+.pers-icon{font-size:28px;margin-bottom:.6rem;}
+.pers-title{font-size:12px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:.5rem;}
+.pers-text{font-size:12px;color:var(--dim);line-height:1.65;}
+.strength-list{display:flex;flex-direction:column;gap:6px;margin-top:.5rem;}
+.strength-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);}
+.strength-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.strength-dot.green{background:var(--teal);}
+.strength-dot.red{background:var(--pink);}
+
+/* ── CHAT ── */
+.chat-container{display:flex;flex-direction:column;height:78dvh;min-height:480px;background:var(--card);border:.5px solid var(--border);border-radius:var(--r2);overflow:hidden;}
+.chat-header{padding:1.1rem 1.4rem;border-bottom:.5px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.chat-av{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--purple3),#3b0764);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(139,92,246,.35);}
+.chat-name{font-size:15px;color:var(--silver);}
+.chat-status{font-size:11px;color:var(--purple3);margin-top:2px;}
+.chat-msgs{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:14px;}
+.chat-msgs::-webkit-scrollbar{width:3px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.msg{max-width:80%;}
+.msg.ai{align-self:flex-start;}
+.msg.user{align-self:flex-end;}
+.msg-bubble{padding:11px 15px;border-radius:16px;font-size:13px;line-height:1.7;}
+.msg.ai .msg-bubble{background:rgba(139,92,246,.12);border:.5px solid var(--border);color:var(--silver);border-top-left-radius:4px;}
+.msg.user .msg-bubble{background:rgba(139,92,246,.25);border:.5px solid var(--border2);color:#fff;border-bottom-right-radius:4px;}
+.msg-time{font-size:10px;color:var(--dim2);margin-top:4px;}
+.msg.user .msg-time{text-align:right;}
+.quick-qs{display:flex;flex-wrap:wrap;gap:7px;padding:.65rem 1.25rem;border-top:.5px solid var(--border);flex-shrink:0;}
+.quick-q{padding:5px 12px;border-radius:20px;font-size:11px;background:rgba(139,92,246,.08);border:.5px solid var(--border);color:var(--dim);cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap;}
+.quick-q:hover{color:var(--purple3);border-color:var(--border2);}
+.chat-input-area{padding:.9rem 1.1rem;border-top:.5px solid var(--border);display:flex;gap:9px;align-items:flex-end;flex-shrink:0;}
+.chat-input{flex:1;background:rgba(139,92,246,.07);border:.5px solid var(--border);border-radius:12px;padding:10px 14px;color:var(--silver);font-size:13px;font-family:inherit;resize:none;outline:none;max-height:100px;line-height:1.5;transition:border-color .18s;}
+.chat-input:focus{border-color:var(--purple);}
+.chat-input::placeholder{color:var(--dim2);}
+.chat-send{width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--purple),#4c1d95);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;transition:transform .18s,box-shadow .18s;}
+.chat-send:hover{transform:scale(1.08);box-shadow:0 4px 20px rgba(139,92,246,.4);}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--purple3);animation:td 1.2s infinite;}
+.typing-dot:nth-child(2){animation-delay:.2s;}
+.typing-dot:nth-child(3){animation-delay:.4s;}
+@keyframes td{0%,60%,100%{opacity:.3;transform:scale(.9);}30%{opacity:1;transform:scale(1.1);}}
+
+/* ── PROFILE ── */
+.profile-hero{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:.5px solid var(--border);margin-bottom:1.5rem;}
+.profile-av{width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--purple3),#3b0764);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 1rem;box-shadow:0 0 40px rgba(139,92,246,.4);}
+.profile-name{font-size:22px;color:var(--gold2);margin-bottom:4px;}
+.profile-signs{font-size:13px;color:var(--dim);}
+.sign-trio{display:flex;justify-content:center;gap:28px;margin:1.5rem 0 .5rem;}
+.sign-item{text-align:center;}
+.sign-sym{font-size:26px;margin-bottom:4px;}
+.sign-role{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim2);}
+.sign-name{font-size:13px;color:var(--silver);margin-top:2px;}
+.premium-banner{background:linear-gradient(135deg,rgba(200,168,75,.1),rgba(200,168,75,.04));border:.5px solid rgba(200,168,75,.3);border-radius:var(--r);padding:1.4rem;text-align:center;margin:1rem 0;}
+.premium-title{font-size:15px;color:var(--gold2);margin-bottom:.4rem;}
+.premium-text{font-size:12px;color:var(--dim);margin-bottom:1rem;line-height:1.6;}
+.btn-gold{padding:11px 26px;border-radius:var(--r);background:linear-gradient(135deg,var(--gold),#a07030);border:none;color:#1a0f00;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .18s,box-shadow .18s;}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(200,168,75,.35);}
+.settings-list{display:flex;flex-direction:column;gap:1px;}
+.setting-item{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;background:var(--card);border:.5px solid var(--border);cursor:pointer;transition:background .15s;}
+.setting-item:first-child{border-radius:var(--r) var(--r) 0 0;}
+.setting-item:last-child{border-radius:0 0 var(--r) var(--r);}
+.setting-item:hover{background:rgba(139,92,246,.07);}
+.setting-left{display:flex;align-items:center;gap:12px;}
+.setting-icon{font-size:18px;width:26px;text-align:center;}
+.setting-label{font-size:13px;color:var(--silver);}
+.setting-sub{font-size:11px;color:var(--dim2);}
+.setting-chev{color:var(--dim2);font-size:16px;}
+
+/* ── MISC ── */
+.hidden{display:none!important;}
+.modal-overlay{position:fixed;inset:0;background:rgba(5,4,15,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.hidden{display:none;}
+.modal{background:var(--card2);border:.5px solid var(--border2);border-radius:var(--r2);padding:2rem;width:100%;max-width:440px;position:relative;}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;}
+
+@media(max-width:700px){
+  .cards-grid.four{grid-template-columns:1fr 1fr;}
+  .chart-layout{grid-template-columns:1fr;}
+  .syn-grid{grid-template-columns:1fr;}
+  .personality-grid{grid-template-columns:1fr;}
+  .aspects-grid{grid-template-columns:1fr;}
+  .nav-tabs{display:none;}
+  .page{padding:1rem;}
+}
+</style>
 </head>
 <body>
-  <canvas id="stars-canvas"></canvas>
+<canvas id="galaxy-canvas"></canvas>
+<div class="app">
 
-  <div class="app" id="app">
-    <div class="stars-bg"></div>
-    <div class="content">
+<!-- NAV -->
+<nav id="main-nav" class="hidden">
+  <div class="nav-logo" onclick="showPage('dashboard')">✦ VELUM</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-page="dashboard">Ana Sayfa</button>
+    <button class="nav-tab" data-page="chart">Haritam</button>
+    <button class="nav-tab" data-page="forecast">Öngörüler</button>
+    <button class="nav-tab" data-page="synastry">Aşk & Uyum</button>
+    <button class="nav-tab" data-page="personality">Kişilik</button>
+    <button class="nav-tab" data-page="career">Kariyer</button>
+    <button class="nav-tab" data-page="chat">Astrolog AI</button>
+    <button class="nav-tab" data-page="profile">Profil</button>
+  </div>
+  <div class="nav-right">
+    <div class="nav-avatar" onclick="showPage('profile')">✦</div>
+  </div>
+</nav>
 
-      <!-- ═══════════════════════════════════════
-           NAVIGATION
-      ═══════════════════════════════════════ -->
-      <nav id="main-nav" class="hidden">
-        <div class="nav-logo">
-          <span class="logo-symbol">✦</span>
-          <span class="logo-text">VELUM</span>
+<!-- ═══ ONBOARDING ═══ -->
+<div id="page-onboarding" class="page active" style="padding:0;">
+  <div class="onboard">
+    <div class="orb-wrap">
+      <div class="orb-ring"></div>
+      <div class="orb-ring2"></div>
+      <div class="orb">✦</div>
+    </div>
+    <h1 class="onboard-title">V E L U M</h1>
+    <p class="onboard-sub">Kişisel evren rehberin. Doğum haritanı keşfet, kozmosun dilini öğren.</p>
+    <div class="form-card">
+      <p class="form-title">✦ Doğum Bilgilerini Gir</p>
+      <div class="form-group">
+        <label class="form-label" for="inp-name">Adın</label>
+        <input class="form-input" id="inp-name" type="text" placeholder="Adını gir..." autocomplete="given-name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="inp-date">Doğum Tarihi</label>
+        <input class="form-input" id="inp-date" type="date" value="1993-05-15"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="inp-time">Doğum Saati</label>
+          <input class="form-input" id="inp-time" type="time" value="14:30"/>
         </div>
-        <div class="nav-tabs">
-          <button class="nav-tab active" data-page="dashboard">Ana Sayfa</button>
-          <button class="nav-tab" data-page="chart">Haritam</button>
-          <button class="nav-tab" data-page="forecast">Öngörüler</button>
-          <button class="nav-tab" data-page="chat">Astrolog AI</button>
-          <button class="nav-tab" data-page="profile">Profil</button>
-        </div>
-        <div class="nav-user" id="nav-user-avatar">✦</div>
-      </nav>
-
-      <!-- ═══════════════════════════════════════
-           PAGE: ONBOARDING
-      ═══════════════════════════════════════ -->
-      <div id="page-onboarding" class="page active">
-        <div class="onboarding">
-          <div class="onboard-orb">✦</div>
-          <h1 class="onboard-title">A S T R U M</h1>
-          <p class="onboard-sub">Kozmosun haritanı çıkar. Gezegenler sana ne söylüyor?</p>
-
-          <div class="form-card">
-            <p class="form-title">✦ Doğum Bilgilerini Gir</p>
-
-            <div class="form-group">
-              <label class="form-label" for="inp-name">Adın</label>
-              <input class="form-input" id="inp-name" type="text" placeholder="Adını gir..." autocomplete="given-name" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="inp-date">Doğum Tarihi</label>
-              <input class="form-input" id="inp-date" type="date" value="1993-05-15" />
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="inp-time">Doğum Saati</label>
-                <input class="form-input" id="inp-time" type="time" value="14:30" />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="inp-city">Doğum Yeri</label>
-                <input class="form-input" id="inp-city" type="text" placeholder="İstanbul..." />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="inp-apikey">Groq API Key <span style="color:var(--gold);font-size:11px;">(isteğe bağlı — AI sohbet için)</span></label>
-              <input class="form-input" id="inp-apikey" type="password" placeholder="gsk_..." autocomplete="off" />
-              <div style="font-size:11px;color:var(--text-dim);margin-top:6px;">
-                🔒 Key sadece tarayıcında saklanır, hiçbir yere gönderilmez.
-                <a href="https://console.groq.com" target="_blank" style="color:var(--purple-light);">Ücretsiz al →</a>
-              </div>
-            </div>
-            <button class="btn-cosmic" id="create-chart-btn">✦ Haritamı Oluştur</button>
-          </div>
+        <div class="form-group">
+          <label class="form-label" for="inp-city">Doğum Yeri</label>
+          <input class="form-input" id="inp-city" type="text" placeholder="İstanbul..."/>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label" for="inp-apikey">Groq API Key <span style="color:var(--gold);font-size:10px;">(AI sohbet için — isteğe bağlı)</span></label>
+        <input class="form-input" id="inp-apikey" type="password" placeholder="gsk_..." autocomplete="off"/>
+        <div class="form-hint">🔒 Tarayıcında kalır, hiçbir yere gönderilmez. <a href="https://console.groq.com" target="_blank">Ücretsiz al →</a></div>
+      </div>
+      <button class="btn-cosmic" id="create-chart-btn">✦ Haritamı Oluştur</button>
+    </div>
+  </div>
+</div>
 
-      <!-- ═══════════════════════════════════════
-           PAGE: DASHBOARD
-      ═══════════════════════════════════════ -->
-      <div id="page-dashboard" class="page">
-        <div class="greeting">
-          <div class="greeting-small">Hoş geldin</div>
-          <div class="greeting-name" id="dash-name">✦</div>
-        </div>
+<!-- ═══ DASHBOARD ═══ -->
+<div id="page-dashboard" class="page">
+  <div class="greeting">
+    <div class="greeting-small">Hoş geldin</div>
+    <div class="greeting-name" id="dash-name">✦</div>
+  </div>
+  <div class="today-hero">
+    <div class="today-hero-label">✦ Bugünün Kozmik Enerjisi</div>
+    <div class="today-hero-title" id="today-title"></div>
+    <div class="today-hero-text" id="today-text"></div>
+    <div class="today-pills" id="today-pills"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:1.5rem;">
+    <div class="moon-widget" style="margin-bottom:0;">
+      <div class="moon-symbol" id="moon-phase-sym">🌕</div>
+      <div>
+        <div class="moon-info-title" id="moon-phase-name">Dolunay</div>
+        <div class="moon-info-text" id="moon-phase-text">Duygular dorukta, kararlar netleşiyor.</div>
+      </div>
+    </div>
+    <div class="cosmic-card" style="display:flex;flex-direction:column;justify-content:center;" data-navigate="forecast">
+      <div class="card-label">Aktif Transit</div>
+      <div class="card-value" id="active-transit" style="font-size:14px;margin-top:4px;">—</div>
+      <div class="card-sub" id="active-transit-sub">—</div>
+    </div>
+  </div>
+  <div class="cards-grid four">
+    <div class="cosmic-card" data-navigate="chart">
+      <div class="card-icon" id="d-sun-icon">♉</div>
+      <div class="card-label">Güneş</div>
+      <div class="card-value" id="d-sun">—</div>
+      <div class="card-sub" id="d-sun-deg">—</div>
+    </div>
+    <div class="cosmic-card" data-navigate="chart">
+      <div class="card-icon" id="d-moon-icon">♓</div>
+      <div class="card-label">Ay</div>
+      <div class="card-value" id="d-moon">—</div>
+      <div class="card-sub" id="d-moon-deg">—</div>
+    </div>
+    <div class="cosmic-card" data-navigate="chart">
+      <div class="card-icon" id="d-asc-icon">♑</div>
+      <div class="card-label">Yükselen</div>
+      <div class="card-value" id="d-asc">—</div>
+      <div class="card-sub" id="d-asc-deg">—</div>
+    </div>
+    <div class="cosmic-card" data-navigate="chart">
+      <div class="card-icon">♃</div>
+      <div class="card-label">Jüpiter</div>
+      <div class="card-value" id="d-jup">—</div>
+      <div class="card-sub">Gelişim</div>
+    </div>
+  </div>
+  <div class="sec-title">✦ Bugünün Transitleri</div>
+  <div class="transit-list" id="transit-list"></div>
+  <div class="sec-title">✦ Bu Hafta</div>
+  <div class="f-card"><div class="f-text" id="weekly-snippet"></div></div>
+</div>
 
-        <div class="today-banner">
-          <div class="today-label">✦ Bugünün Kozmik Enerjisi</div>
-          <div class="today-title" id="today-title"></div>
-          <div class="today-text" id="today-text"></div>
-          <div class="planet-pills" id="today-pills"></div>
-        </div>
-
-        <div class="cards-grid">
-          <div class="cosmic-card" data-navigate="chart">
-            <div class="card-icon" id="sun-icon">♉</div>
-            <div class="card-label">Güneş Burcu</div>
-            <div class="card-value" id="sun-card">—</div>
-            <div class="card-sub" id="sun-deg">—</div>
-          </div>
-          <div class="cosmic-card" data-navigate="chart">
-            <div class="card-icon" id="moon-icon">♓</div>
-            <div class="card-label">Ay Burcu</div>
-            <div class="card-value" id="moon-card">—</div>
-            <div class="card-sub" id="moon-deg">—</div>
-          </div>
-          <div class="cosmic-card" data-navigate="chart">
-            <div class="card-icon" id="asc-icon">♑</div>
-            <div class="card-label">Yükselen</div>
-            <div class="card-value" id="asc-card">—</div>
-            <div class="card-sub" id="asc-deg">—</div>
-          </div>
-          <div class="cosmic-card" data-navigate="forecast">
-            <div class="card-icon">⊙</div>
-            <div class="card-label">Aktif Transit</div>
-            <div class="card-value" id="active-transit" style="font-size:15px;">—</div>
-            <div class="card-sub" id="active-transit-sub">—</div>
-          </div>
-        </div>
-
-        <div class="section-title">✦ Güncel Gezegenler</div>
-        <div class="transit-list" id="transit-list"></div>
-
-        <div class="section-title">✦ Bu Hafta</div>
-        <div class="forecast-section">
-          <div class="f-text" id="weekly-text"></div>
+<!-- ═══ BIRTH CHART ═══ -->
+<div id="page-chart" class="page">
+  <div class="greeting-small" style="margin-bottom:1.25rem;letter-spacing:2px;">✦ DOĞUM HARİTAN</div>
+  <div class="chart-layout">
+    <div class="chart-canvas-wrap">
+      <canvas id="birth-chart" width="420" height="420"></canvas>
+    </div>
+    <div>
+      <div class="planet-detail-panel" id="planet-detail">
+        <div class="pd-empty">
+          <div style="font-size:36px;">✦</div>
+          <div>Bir gezegene tıkla<br>detaylı analiz gör</div>
         </div>
       </div>
+    </div>
+  </div>
+  <div class="sec-title" style="margin-top:1.5rem;">✦ Gezegen Pozisyonları</div>
+  <div class="planets-grid" id="planets-grid"></div>
+</div>
 
-      <!-- ═══════════════════════════════════════
-           PAGE: BIRTH CHART
-      ═══════════════════════════════════════ -->
-      <div id="page-chart" class="page">
-        <div class="greeting-small page-eyebrow">✦ DOĞUM HARİTAN</div>
-        <div class="chart-wrapper">
-          <canvas id="birth-chart" width="480" height="480"></canvas>
-        </div>
-        <div class="section-title" style="margin-top:1.5rem;">✦ Gezegen Pozisyonları</div>
-        <div class="planets-grid" id="planets-grid"></div>
+<!-- ═══ FORECASTS ═══ -->
+<div id="page-forecast" class="page">
+  <div class="greeting-small" style="margin-bottom:1.25rem;letter-spacing:2px;">✦ ÖNGÖRÜLER</div>
+  <div class="forecast-tabs">
+    <button class="f-tab active" data-fc="daily">Bugün</button>
+    <button class="f-tab" data-fc="weekly">Haftalık</button>
+    <button class="f-tab" data-fc="monthly">Aylık</button>
+    <button class="f-tab" data-fc="yearly">Yıllık</button>
+    <button class="f-tab" data-fc="upcoming">Dönemler</button>
+  </div>
+  <div id="fc-daily" class="f-content active">
+    <div class="f-card"><div class="f-card-title">☉ Güneş Enerjisi</div><div class="f-text" id="fc-sun"></div><div class="energy-bar"><div class="energy-label"><span>Güç</span><span id="fc-sun-p">—</span></div><div class="energy-track"><div class="energy-fill g" id="fc-sun-f" style="width:0%"></div></div></div></div>
+    <div class="f-card"><div class="f-card-title">☽ Ay Enerjisi</div><div class="f-text" id="fc-moon"></div><div class="energy-bar"><div class="energy-label"><span>Duygu</span><span id="fc-moon-p">—</span></div><div class="energy-track"><div class="energy-fill p" id="fc-moon-f" style="width:0%"></div></div></div></div>
+    <div class="f-card"><div class="f-card-title">☿ Merkür — İletişim</div><div class="f-text" id="fc-merc"></div><div class="energy-bar"><div class="energy-label"><span>Netlik</span><span id="fc-merc-p">—</span></div><div class="energy-track"><div class="energy-fill t" id="fc-merc-f" style="width:0%"></div></div></div></div>
+    <div class="f-card"><div class="f-card-title">♀ Venüs — Aşk & İlişkiler</div><div class="f-text" id="fc-venus"></div></div>
+    <div class="f-card"><div class="f-card-title">♂ Mars — Eylem & Enerji</div><div class="f-text" id="fc-mars"></div></div>
+  </div>
+  <div id="fc-weekly" class="f-content">
+    <div class="f-card"><div class="f-card-title">✦ Haftalık Analiz</div><div class="f-text" id="fc-week-main"></div></div>
+    <div class="f-card"><div class="f-card-title">⚡ Dikkat Noktaları</div><div class="f-text" id="fc-week-warn"></div></div>
+    <div class="f-card"><div class="f-card-title">📅 Haftanın Önemli Günleri</div><div id="fc-week-dates"></div></div>
+  </div>
+  <div id="fc-monthly" class="f-content">
+    <div class="f-card"><div class="f-card-title">✦ Aylık Genel Bakış</div><div class="f-text" id="fc-month-main"></div></div>
+    <div class="f-card"><div class="f-card-title">💕 Aşk & İlişkiler</div><div class="f-text" id="fc-month-love"></div></div>
+    <div class="f-card"><div class="f-card-title">💼 Kariyer & Para</div><div class="f-text" id="fc-month-career"></div></div>
+    <div class="f-card"><div class="f-card-title">📅 Önemli Tarihler</div><div id="fc-month-dates"></div></div>
+  </div>
+  <div id="fc-yearly" class="f-content">
+    <div class="f-card"><div class="f-card-title">✦ Yıllık Genel Bakış</div><div class="f-text" id="fc-year-main"></div></div>
+    <div class="f-card"><div class="f-card-title">🌟 Bu Yılın Teması</div><div class="f-text" id="fc-year-theme"></div></div>
+    <div class="f-card"><div class="f-card-title">📅 Yılın Büyük Dönemleri</div><div id="fc-year-periods"></div></div>
+  </div>
+  <div id="fc-upcoming" class="f-content">
+    <div class="f-card"><div class="f-card-title">✦ Önümüzdeki Büyük Dönemler</div><div class="f-text" id="fc-up-intro"></div><div id="fc-up-list" style="margin-top:.75rem;"></div></div>
+  </div>
+</div>
+
+<!-- ═══ SYNASTRY ═══ -->
+<div id="page-synastry" class="page">
+  <div class="greeting-small" style="margin-bottom:1.25rem;letter-spacing:2px;">✦ AŞK & UYUM ANALİZİ</div>
+  <div class="synastry-form">
+    <div class="syn-grid">
+      <div>
+        <div class="syn-person-title">👤 Sen</div>
+        <div class="form-group"><label class="form-label">Ad</label><input class="form-input" id="syn-name1" placeholder="Adın..."/></div>
+        <div class="form-group"><label class="form-label">Doğum Tarihi</label><input class="form-input" id="syn-date1" type="date"/></div>
+        <div class="form-group"><label class="form-label">Doğum Saati</label><input class="form-input" id="syn-time1" type="time" value="12:00"/></div>
       </div>
-
-      <!-- ═══════════════════════════════════════
-           PAGE: FORECASTS
-      ═══════════════════════════════════════ -->
-      <div id="page-forecast" class="page">
-        <div class="greeting-small page-eyebrow">✦ ÖNGÖRÜLER</div>
-
-        <div class="forecast-tabs">
-          <button class="f-tab active" data-forecast="daily">Bugün</button>
-          <button class="f-tab" data-forecast="weekly">Haftalık</button>
-          <button class="f-tab" data-forecast="monthly">Aylık</button>
-          <button class="f-tab" data-forecast="upcoming">Dönemler</button>
-        </div>
-
-        <!-- Daily -->
-        <div id="forecast-daily" class="forecast-content active">
-          <div class="forecast-section">
-            <div class="f-section-title">☉ Güneş Enerjisi</div>
-            <div class="f-text" id="f-sun-text"></div>
-            <div class="energy-bar">
-              <div class="energy-label"><span>Güç</span><span id="f-sun-pct">—</span></div>
-              <div class="energy-track"><div class="energy-fill gold" id="f-sun-fill" style="width:0%"></div></div>
-            </div>
-          </div>
-          <div class="forecast-section">
-            <div class="f-section-title">☽ Ay Enerjisi</div>
-            <div class="f-text" id="f-moon-text"></div>
-            <div class="energy-bar">
-              <div class="energy-label"><span>Duygu Akışı</span><span id="f-moon-pct">—</span></div>
-              <div class="energy-track"><div class="energy-fill purple" id="f-moon-fill" style="width:0%"></div></div>
-            </div>
-          </div>
-          <div class="forecast-section">
-            <div class="f-section-title">☿ Merkür Enerjisi</div>
-            <div class="f-text" id="f-merc-text"></div>
-            <div class="energy-bar">
-              <div class="energy-label"><span>İletişim</span><span id="f-merc-pct">—</span></div>
-              <div class="energy-track"><div class="energy-fill teal" id="f-merc-fill" style="width:0%"></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Weekly -->
-        <div id="forecast-weekly" class="forecast-content">
-          <div class="forecast-section">
-            <div class="f-section-title">✦ Haftalık Analiz</div>
-            <div class="f-text" id="f-weekly-main"></div>
-          </div>
-          <div class="forecast-section">
-            <div class="f-section-title">⚡ Dikkat Edilecekler</div>
-            <div class="f-text" id="f-weekly-warn"></div>
-          </div>
-        </div>
-
-        <!-- Monthly -->
-        <div id="forecast-monthly" class="forecast-content">
-          <div class="forecast-section">
-            <div class="f-section-title">✦ Aylık Genel Bakış</div>
-            <div class="f-text" id="f-monthly-main"></div>
-          </div>
-          <div class="forecast-section">
-            <div class="f-section-title">📅 Önemli Günler</div>
-            <div class="timeline-list" id="f-monthly-dates"></div>
-          </div>
-        </div>
-
-        <!-- Upcoming -->
-        <div id="forecast-upcoming" class="forecast-content">
-          <div class="forecast-section">
-            <div class="f-section-title">✦ Önümüzdeki Büyük Dönemler</div>
-            <div class="f-text" id="f-upcoming-intro"></div>
-            <div class="timeline-list" id="f-upcoming-list"></div>
-          </div>
-        </div>
+      <div>
+        <div class="syn-person-title">💕 Partner</div>
+        <div class="form-group"><label class="form-label">Ad</label><input class="form-input" id="syn-name2" placeholder="Partnerinin adı..."/></div>
+        <div class="form-group"><label class="form-label">Doğum Tarihi</label><input class="form-input" id="syn-date2" type="date"/></div>
+        <div class="form-group"><label class="form-label">Doğum Saati</label><input class="form-input" id="syn-time2" type="time" value="12:00"/></div>
       </div>
-
-      <!-- ═══════════════════════════════════════
-           PAGE: AI CHAT
-      ═══════════════════════════════════════ -->
-      <div id="page-chat" class="page">
-        <div class="chat-container">
-          <div class="chat-header">
-            <div class="chat-avatar">✦</div>
-            <div>
-              <div class="chat-name">Velum AI Astrolog</div>
-              <div class="chat-status">● Haritanı biliyor · Çevrimiçi</div>
-            </div>
-          </div>
-
-          <div class="chat-messages" id="chat-messages">
-            <div class="msg astrologer">
-              <div class="msg-bubble" id="ai-intro">Merhaba! Doğum haritanı oluşturduktan sonra burada sohbet edebiliriz.</div>
-              <div class="msg-time">Az önce</div>
-            </div>
-          </div>
-
-          <div class="quick-questions" id="quick-questions">
-            <button class="quick-q" data-question="Sevgi ve ilişkiler hakkında haritam ne söylüyor?">💕 Aşk</button>
-            <button class="quick-q" data-question="Kariyer ve para konusunda haritam ne gösteriyor?">💼 Kariyer</button>
-            <button class="quick-q" data-question="Bu ay benim için nasıl geçecek?">📅 Bu Ay</button>
-            <button class="quick-q" data-question="Güçlü ve zorlu yanlarım neler?">⚡ Güçlü Yanlarım</button>
-          </div>
-
-          <div class="chat-input-area">
-            <textarea
-              class="chat-input"
-              id="chat-input"
-              rows="1"
-              placeholder="Haritanla ilgili bir şey sor..."
-            ></textarea>
-            <button class="chat-send" id="chat-send-btn" aria-label="Gönder">➤</button>
-          </div>
-        </div>
+    </div>
+    <button class="btn-cosmic" style="margin-top:1rem;" id="syn-calc-btn">✦ Uyumu Hesapla</button>
+  </div>
+  <div class="syn-result" id="syn-result">
+    <div class="f-card">
+      <div class="compat-score">
+        <div class="compat-num" id="syn-score">—</div>
+        <div class="compat-bar"><div class="compat-fill" id="syn-bar" style="width:0%"></div></div>
+        <div class="compat-label" id="syn-label">Uyum Skoru</div>
       </div>
+    </div>
+    <div class="f-card"><div class="f-card-title">✦ Genel Analiz</div><div class="f-text" id="syn-analysis"></div></div>
+    <div class="f-card"><div class="f-card-title">💕 Güçlü Yönler</div><div class="aspects-grid" id="syn-strengths"></div></div>
+    <div class="f-card"><div class="f-card-title">⚡ Zorluk Alanları</div><div class="aspects-grid" id="syn-challenges"></div></div>
+    <div class="f-card"><div class="f-card-title">📅 İlişki Zamanlaması</div><div class="f-text" id="syn-timing"></div></div>
+  </div>
+</div>
 
-      <!-- ═══════════════════════════════════════
-           PAGE: PROFILE
-      ═══════════════════════════════════════ -->
-      <div id="page-profile" class="page">
-        <div class="profile-header">
-          <div class="profile-avatar">✦</div>
-          <div class="profile-name" id="prof-name">—</div>
-          <div class="profile-signs" id="prof-signs">—</div>
-          <div class="sign-trio" id="sign-trio"></div>
-        </div>
+<!-- ═══ PERSONALITY ═══ -->
+<div id="page-personality" class="page">
+  <div class="greeting-small" style="margin-bottom:1.25rem;letter-spacing:2px;">✦ KİŞİLİK ANALİZİ</div>
+  <div class="personality-grid" id="pers-grid"></div>
+  <div class="sec-title">✦ Güçlü & Zorlu Yönlerin</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:1.5rem;">
+    <div class="f-card"><div class="f-card-title" style="color:var(--teal);">💚 Güçlü Yönlerin</div><div class="strength-list" id="pers-strengths"></div></div>
+    <div class="f-card"><div class="f-card-title" style="color:var(--pink);">🔥 Gelişim Alanların</div><div class="strength-list" id="pers-challenges"></div></div>
+  </div>
+  <div class="sec-title">✦ Hayat Döngülerin</div>
+  <div class="f-card"><div class="f-text" id="pers-cycles"></div></div>
+</div>
 
-        <div class="premium-banner">
-          <div class="premium-title">✦ Premium Üyeliğe Geç</div>
-          <div class="premium-text">PDF doğum haritası raporu, sınırsız AI astrolog sohbeti, detaylı yıllık öngörüler ve kişisel transit takip sistemi.</div>
-          <button class="btn-gold">Premium'a Yükselt →</button>
-        </div>
+<!-- ═══ CAREER ═══ -->
+<div id="page-career" class="page">
+  <div class="greeting-small" style="margin-bottom:1.25rem;letter-spacing:2px;">✦ KARİYER & PARA</div>
+  <div class="cards-grid" style="margin-bottom:1.5rem;">
+    <div class="f-card" style="margin-bottom:0;"><div class="f-card-title">💼 Meslek Eğilimin</div><div class="f-text" id="car-tendency"></div></div>
+    <div class="f-card" style="margin-bottom:0;"><div class="f-card-title">💰 Para Potansiyelin</div><div class="f-text" id="car-money"></div></div>
+  </div>
+  <div class="f-card"><div class="f-card-title">🌟 Yetenek Alanların</div><div class="f-text" id="car-talents"></div></div>
+  <div class="f-card"><div class="f-card-title">📅 Kariyer Dönemlerin</div><div id="car-periods"></div></div>
+  <div class="f-card"><div class="f-card-title">⚡ Dikkat: Zorlayıcı Dönemler</div><div class="f-text" id="car-warn"></div></div>
+</div>
 
-        <div class="section-title" style="margin-top:1.5rem;">✦ Ayarlar</div>
-        <div class="settings-list">
-          <div class="setting-item" id="btn-edit-birth">
-            <div class="setting-left">
-              <div class="setting-icon">✦</div>
-              <div>
-                <div class="setting-label">Doğum Bilgilerini Düzenle</div>
-                <div class="setting-sub">Harita bilgilerini güncelle</div>
-              </div>
-            </div>
-            <div class="setting-chevron">›</div>
-          </div>
-          <div class="setting-item">
-            <div class="setting-left">
-              <div class="setting-icon">🔔</div>
-              <div>
-                <div class="setting-label">Bildirimler</div>
-                <div class="setting-sub">Günlük transit hatırlatmaları</div>
-              </div>
-            </div>
-            <div class="setting-chevron">›</div>
-          </div>
-          <div class="setting-item" id="btn-download-pdf">
-            <div class="setting-left">
-              <div class="setting-icon">📄</div>
-              <div>
-                <div class="setting-label">PDF Rapor İndir</div>
-                <div class="setting-sub">Premium özelliği</div>
-              </div>
-            </div>
-            <div class="setting-chevron">›</div>
-          </div>
-        </div>
+<!-- ═══ CHAT ═══ -->
+<div id="page-chat" class="page">
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="chat-av">✦</div>
+      <div>
+        <div class="chat-name">Velum AI Astrolog</div>
+        <div class="chat-status">● Haritanı biliyor · Çevrimiçi</div>
       </div>
+    </div>
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="msg ai">
+        <div class="msg-bubble" id="ai-intro">Merhaba! Doğum haritanı oluşturduktan sonra sohbet edebiliriz.</div>
+        <div class="msg-time">Az önce</div>
+      </div>
+    </div>
+    <div class="quick-qs" id="quick-qs">
+      <button class="quick-q" data-q="Aşk hayatımda bu ay neye dikkat etmeliyim?">💕 Aşk</button>
+      <button class="quick-q" data-q="Kariyer ve para konusunda en güçlü dönemim ne zaman?">💼 Kariyer</button>
+      <button class="quick-q" data-q="En büyük güçlü ve zorlu yanlarım neler?">⚡ Kişilik</button>
+      <button class="quick-q" data-q="Bu ay benim için nasıl geçecek?">📅 Bu Ay</button>
+      <button class="quick-q" data-q="Hayatımda tekrarlayan döngüler neler?">🔄 Döngüler</button>
+    </div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chat-input" rows="1" placeholder="Haritanla ilgili bir şey sor..."></textarea>
+      <button class="chat-send" id="chat-send-btn">➤</button>
+    </div>
+  </div>
+</div>
 
-    </div><!-- /content -->
-  </div><!-- /app -->
+<!-- ═══ PROFILE ═══ -->
+<div id="page-profile" class="page">
+  <div class="profile-hero">
+    <div class="profile-av">✦</div>
+    <div class="profile-name" id="prof-name">—</div>
+    <div class="profile-signs" id="prof-signs">—</div>
+    <div class="sign-trio" id="prof-trio"></div>
+  </div>
+  <div class="premium-banner">
+    <div class="premium-title">✦ Premium — Tam Evren Rehberi</div>
+    <div class="premium-text">PDF doğum haritası raporu · 12 aylık detaylı analiz · İlişki raporu · Kariyer raporu · Sınırsız AI sohbet</div>
+    <button class="btn-gold">Premium'a Yükselt →</button>
+  </div>
+  <div class="sec-title" style="margin-top:1.5rem;">✦ Ayarlar</div>
+  <div class="settings-list">
+    <div class="setting-item" id="btn-edit-birth"><div class="setting-left"><div class="setting-icon">✦</div><div><div class="setting-label">Doğum Bilgilerini Düzenle</div><div class="setting-sub">Harita bilgilerini güncelle</div></div></div><div class="setting-chev">›</div></div>
+    <div class="setting-item" id="btn-update-key"><div class="setting-left"><div class="setting-icon">🔑</div><div><div class="setting-label">API Key Güncelle</div><div class="setting-sub">Groq key'ini değiştir</div></div></div><div class="setting-chev">›</div></div>
+    <div class="setting-item"><div class="setting-left"><div class="setting-icon">🔔</div><div><div class="setting-label">Bildirimler</div><div class="setting-sub">Günlük transit hatırlatmaları</div></div></div><div class="setting-chev">›</div></div>
+    <div class="setting-item"><div class="setting-left"><div class="setting-icon">📄</div><div><div class="setting-label">PDF Rapor İndir</div><div class="setting-sub">Premium özelliği</div></div></div><div class="setting-chev">›</div></div>
+  </div>
+</div>
 
-  <!-- Scripts -->
-  <script src="config.js"></script>
-  <script src="src/utils/astro.js"></script>
-  <script src="src/utils/content.js"></script>
-  <script src="src/components/stars.js"></script>
-  <script src="src/components/chart.js"></script>
-  <script src="src/components/chat.js"></script>
-  <script src="src/app.js"></script>
+</div><!-- /app -->
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay hidden" id="key-modal">
+  <div class="modal">
+    <button class="modal-close" id="key-modal-close">✕</button>
+    <p style="font-size:16px;color:var(--silver);margin-bottom:1rem;">🔑 Groq API Key Güncelle</p>
+    <div class="form-group">
+      <label class="form-label">Yeni API Key</label>
+      <input class="form-input" id="modal-apikey" type="password" placeholder="gsk_..."/>
+      <div class="form-hint">🔒 Sadece bu cihazda saklanır. <a href="https://console.groq.com" target="_blank">Ücretsiz al →</a></div>
+    </div>
+    <button class="btn-cosmic" id="key-modal-save">Kaydet</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// GALAXY BACKGROUND
+// ═══════════════════════════════════════════════
+(function(){
+  const c=document.getElementById('galaxy-canvas');
+  const ctx=c.getContext('2d');
+  let W,H,stars=[],nebulas=[];
+
+  function resize(){
+    W=c.width=window.innerWidth;
+    H=c.height=window.innerHeight;
+  }
+
+  function init(){
+    resize();
+    stars=[];
+    for(let i=0;i<280;i++){
+      stars.push({
+        x:Math.random()*W, y:Math.random()*H,
+        r:Math.random()*1.4+.2,
+        o:Math.random()*.7+.1,
+        s:Math.random()*.004+.001,
+        t:Math.random()*Math.PI*2,
+        cross:Math.random()>.88
+      });
+    }
+    nebulas=[
+      {x:.2,y:.2,r:180,c:'rgba(139,92,246,.055)'},
+      {x:.8,y:.75,r:220,c:'rgba(76,29,149,.045)'},
+      {x:.5,y:.05,r:150,c:'rgba(200,168,75,.03)'},
+      {x:.15,y:.8,r:160,c:'rgba(45,212,191,.03)'},
+    ];
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    nebulas.forEach(n=>{
+      const g=ctx.createRadialGradient(n.x*W,n.y*H,0,n.x*W,n.y*H,n.r);
+      g.addColorStop(0,n.c);
+      g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;
+      ctx.beginPath();
+      ctx.arc(n.x*W,n.y*H,n.r,0,Math.PI*2);
+      ctx.fill();
+    });
+    stars.forEach(s=>{
+      s.t+=s.s;
+      const o=s.o*(0.5+0.5*Math.sin(s.t));
+      ctx.fillStyle=`rgba(240,244,255,${o})`;
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+      if(s.cross){
+        ctx.strokeStyle=`rgba(240,244,255,${o*.5})`;
+        ctx.lineWidth=.5;
+        const a=s.r*2.8;
+        ctx.beginPath();ctx.moveTo(s.x-a,s.y);ctx.lineTo(s.x+a,s.y);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(s.x,s.y-a);ctx.lineTo(s.x,s.y+a);ctx.stroke();
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize',resize);
+  init();draw();
+})();
+
+// ═══════════════════════════════════════════════
+// ASTROLOGY ENGINE
+// ═══════════════════════════════════════════════
+const SIGNS=['Koç','Boğa','İkizler','Yengeç','Aslan','Başak','Terazi','Akrep','Yay','Oğlak','Kova','Balık'];
+const SYMS=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+const PSYMS={sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'⛢',neptune:'♆',pluto:'♇'};
+const SIGN_TRAITS={
+  'Koç':{el:'Ateş',q:'Öncü',ruler:'Mars',str:'cesaret ve öncülük',ch:'sabırsızlık ve dürtüsellik',love:'tutkulu ve doğrudan',career:'girişimci, lider'},
+  'Boğa':{el:'Toprak',q:'Sabit',ruler:'Venüs',str:'kararlılık ve güvenilirlik',ch:'inatçılık ve değişime direnç',love:'sadık ve duyusal',career:'finansal zeka, sabırlı inşa'},
+  'İkizler':{el:'Hava',q:'Değişken',ruler:'Merkür',str:'uyumluluk ve iletişim',ch:'kararsızlık ve yüzeysellik',love:'zekice ve çeşitli',career:'iletişim, çoklu proje'},
+  'Yengeç':{el:'Su',q:'Öncü',ruler:'Ay',str:'empati ve sezgi',ch:'aşırı hassasiyet',love:'besleyici ve koruyucu',career:'bakım meslekleri, ev/gıda'},
+  'Aslan':{el:'Ateş',q:'Sabit',ruler:'Güneş',str:'liderlik ve yaratıcılık',ch:'kibir ve onay ihtiyacı',love:'cömert ve dramatik',career:'performans, yönetim, sanat'},
+  'Başak':{el:'Toprak',q:'Değişken',ruler:'Merkür',str:'analitik derinlik',ch:'mükemmeliyetçilik',love:'hizmet odaklı ve titiz',career:'analiz, sağlık, hizmet'},
+  'Terazi':{el:'Hava',q:'Öncü',ruler:'Venüs',str:'adalet ve diplomasi',ch:'kararsızlık',love:'romantik ve dengeli',career:'hukuk, sanat, ortaklık'},
+  'Akrep':{el:'Su',q:'Sabit',ruler:'Plüton',str:'dönüşüm gücü',ch:'kıskançlık ve kontrol',love:'yoğun ve derin',career:'araştırma, psikoloji, finans'},
+  'Yay':{el:'Ateş',q:'Değişken',ruler:'Jüpiter',str:'özgürlük ve iyimserlik',ch:'sorumsuzluk',love:'özgürlükçü ve iyimser',career:'eğitim, yayıncılık, seyahat'},
+  'Oğlak':{el:'Toprak',q:'Öncü',ruler:'Satürn',str:'disiplin ve vizyon',ch:'duygusal mesafe',love:'sadık ve sorumlu',career:'yönetim, inşaat, uzun vade'},
+  'Kova':{el:'Hava',q:'Sabit',ruler:'Uranüs',str:'özgünlük ve insancıllık',ch:'duygusal kopukluk',love:'arkadaşça ve alışılmadık',career:'teknoloji, insancıllık, yenilik'},
+  'Balık':{el:'Su',q:'Değişken',ruler:'Neptün',str:'sezgi ve şefkat',ch:'sınır koymak',love:'romantik ve fedakar',career:'sanat, spiritüellik, şifa'}
+};
+const PLANET_MEANINGS={
+  sun:{name:'Güneş',key:'Kimlik & Ego',desc:'Temel kişiliğin, yaşam amacın ve bilinçli benliğin.'},
+  moon:{name:'Ay',key:'Duygular & İçgüdüler',desc:'Duygusal doğan, sezgilerin ve bilinçaltı tepkilerin.'},
+  mercury:{name:'Merkür',key:'Zihin & İletişim',desc:'Düşünce biçimin, iletişim tarzın ve öğrenme şeklin.'},
+  venus:{name:'Venüs',key:'Aşk & Değerler',desc:'Sevgi dili, estetik anlayışın ve neye değer verdiğin.'},
+  mars:{name:'Mars',key:'Eylem & Enerji',desc:'Drive\'ın, cesaretin ve hedeflere ulaşma biçimin.'},
+  jupiter:{name:'Jüpiter',key:'Şans & Gelişim',desc:'Büyüme alanların, şans kapıların ve felsefin.'},
+  saturn:{name:'Satürn',key:'Dersler & Sorumluluk',desc:'Hayat derslerin, kısıtlamaların ve uzun vadeli hedeflerin.'},
+  uranus:{name:'Uranüs',key:'Değişim & Özgünlük',desc:'Devrimci yanın, bağımsızlık ihtiyacın ve şok edici değişimlerin.'},
+  neptune:{name:'Neptün',key:'Hayaller & Spiritüellik',desc:'Mistik yanın, sezgisel derinliğin ve hayallerindeki dünya.'},
+  pluto:{name:'Plüton',key:'Dönüşüm & Güç',desc:'Derin dönüşümün, gizli güçlerin ve yeniden doğuşun.'}
+};
+
+function calcSunSign(m,d){
+  if((m===3&&d>=21)||(m===4&&d<=19))return 0;
+  if((m===4&&d>=20)||(m===5&&d<=20))return 1;
+  if((m===5&&d>=21)||(m===6&&d<=20))return 2;
+  if((m===6&&d>=21)||(m===7&&d<=22))return 3;
+  if((m===7&&d>=23)||(m===8&&d<=22))return 4;
+  if((m===8&&d>=23)||(m===9&&d<=22))return 5;
+  if((m===9&&d>=23)||(m===10&&d<=22))return 6;
+  if((m===10&&d>=23)||(m===11&&d<=21))return 7;
+  if((m===11&&d>=22)||(m===12&&d<=21))return 8;
+  if((m===12&&d>=22)||(m===1&&d<=19))return 9;
+  if((m===1&&d>=20)||(m===2&&d<=18))return 10;
+  return 11;
+}
+function calcMoonSign(dateStr){
+  const ref=new Date('2000-01-01');
+  const d=(new Date(dateStr)-ref)/86400000;
+  return Math.floor((((d%27.32166)/27.32166*12)+12)%12);
+}
+function calcAsc(month,day,hour,minute){
+  return((calcSunSign(month,day)+Math.floor((hour*60+minute)/120)+1))%12;
+}
+function calcPlanets(dateStr){
+  const ref=new Date('2000-01-06');
+  const d=(new Date(dateStr)-ref)/86400000;
+  const planets=[
+    {key:'mercury',period:87.97,offset:9},
+    {key:'venus',period:224.7,offset:8},
+    {key:'mars',period:686.97,offset:2},
+    {key:'jupiter',period:4332.59,offset:1},
+    {key:'saturn',period:10759.22,offset:1},
+    {key:'uranus',period:30688.5,offset:10},
+    {key:'neptune',period:60195,offset:9},
+    {key:'pluto',period:90560,offset:8},
+  ];
+  return planets.map(p=>{
+    const angle=((d/p.period*360)+(p.offset*30))%360;
+    const si=Math.floor(((angle%360)+360)%360/30);
+    return{key:p.key,name:PLANET_MEANINGS[p.key]?.name||p.key,symbol:PSYMS[p.key],sign:SIGNS[si],signSymbol:SYMS[si],signIdx:si,deg:Math.floor(angle%30)};
+  });
+}
+function lunarPhase(dateStr){
+  const ref=new Date('2000-01-06');
+  const d=(new Date(dateStr)-ref)/86400000;
+  const phase=((d%29.53)+29.53)%29.53;
+  const idx=Math.floor(phase/29.53*8);
+  const phases=[
+    {name:'Yeni Ay',sym:'🌑',text:'Yeni başlangıçlar için güçlü enerji. Niyet belirle.'},
+    {name:'Hilal',sym:'🌒',text:'Tohumlar filizleniyor. Sabır ve eylem bir arada.'},
+    {name:'İlk Dördün',sym:'🌓',text:'Karar anı. Kararlılık ve cesaret gerekiyor.'},
+    {name:'Şişen Ay',sym:'🌔',text:'Enerji yükseliyor. Projeler ivme kazanıyor.'},
+    {name:'Dolunay',sym:'🌕',text:'Duygular dorukta. Tamamlamalar ve dönüşümler.'},
+    {name:'Azalan Ay',sym:'🌖',text:'Bırakma vakti. Neye devam edip etmeyeceğini sorgula.'},
+    {name:'Son Dördün',sym:'🌗',text:'Temizlik ve yeniden değerlendirme dönemi.'},
+    {name:'Batan Ay',sym:'🌘',text:'İç dünyaya çekilme. Dinlenme ve hazırlık.'},
+  ];
+  return phases[idx];
+}
+
+// ═══════════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════════
+const APP={state:null};
+
+document.addEventListener('DOMContentLoaded',()=>{
+  bindNav();
+  document.getElementById('create-chart-btn').addEventListener('click',createChart);
+  document.getElementById('syn-calc-btn').addEventListener('click',calcSynastry);
+  document.getElementById('chat-send-btn').addEventListener('click',()=>sendChat());
+  document.getElementById('chat-input').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+  });
+  document.getElementById('chat-input').addEventListener('input',function(){
+    this.style.height='auto';
+    this.style.height=Math.min(this.scrollHeight,100)+'px';
+  });
+  document.querySelectorAll('.quick-q').forEach(b=>{
+    b.addEventListener('click',()=>sendChat(b.dataset.q));
+  });
+  document.getElementById('btn-edit-birth').addEventListener('click',()=>showPage('onboarding'));
+  document.getElementById('btn-update-key').addEventListener('click',()=>{
+    document.getElementById('key-modal').classList.remove('hidden');
+  });
+  document.getElementById('key-modal-close').addEventListener('click',()=>{
+    document.getElementById('key-modal').classList.add('hidden');
+  });
+  document.getElementById('key-modal-save').addEventListener('click',()=>{
+    const k=document.getElementById('modal-apikey').value.trim();
+    if(k){sessionStorage.setItem('velum_groq_key',k);alert('Key kaydedildi ✓');}
+    document.getElementById('key-modal').classList.add('hidden');
+  });
+  document.querySelectorAll('[data-navigate]').forEach(el=>{
+    el.addEventListener('click',()=>showPage(el.dataset.navigate));
+  });
+  loadSaved();
+});
+
+function createChart(){
+  const name=document.getElementById('inp-name').value.trim()||'Misafir';
+  const date=document.getElementById('inp-date').value;
+  const time=document.getElementById('inp-time').value||'12:00';
+  const city=document.getElementById('inp-city').value.trim()||'Bilinmiyor';
+  const apiKey=document.getElementById('inp-apikey').value.trim();
+  if(!date){alert('Lütfen doğum tarihini gir!');return;}
+  if(apiKey) sessionStorage.setItem('velum_groq_key',apiKey);
+
+  const d=new Date(date+'T12:00:00');
+  const month=d.getMonth()+1,day=d.getDate();
+  const[hour,minute]=(time).split(':').map(Number);
+
+  const sunIdx=calcSunSign(month,day);
+  const moonIdx=calcMoonSign(date);
+  const ascIdx=calcAsc(month,day,hour,minute);
+  const planets=calcPlanets(date);
+
+  APP.state={
+    name,birthDate:date,birthTime:time,birthCity:city,
+    sun:SIGNS[sunIdx],sunDeg:day%30,sunIdx,
+    moon:SIGNS[moonIdx],moonDeg:(month*3+day)%30,moonIdx,
+    asc:SIGNS[ascIdx],ascDeg:(hour*2+minute/30)|0,ascIdx,
+    planets,
+  };
+  saveState();
+  buildAll();
+  document.getElementById('main-nav').classList.remove('hidden');
+  showPage('dashboard');
+}
+
+function buildAll(){
+  const s=APP.state;
+  buildDashboard(s);
+  buildChart(s);
+  buildForecasts(s);
+  buildProfile(s);
+  buildPersonality(s);
+  buildCareer(s);
+  buildSynastryPreFill(s);
+  initChat(s);
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function buildDashboard(s){
+  document.getElementById('dash-name').textContent=s.name+' ✦';
+  const today=new Date();
+  const transits=calcPlanets(today.toISOString().split('T')[0]);
+  const phase=lunarPhase(today.toISOString().split('T')[0]);
+  const activePlanet=transits[today.getDay()%transits.length];
+
+  document.getElementById('today-title').textContent=`${activePlanet.name} ${activePlanet.sign}'de — ${getTodayTitle(s)}`;
+  document.getElementById('today-text').textContent=getTodayText(s,activePlanet,phase);
+
+  const pills=[
+    {text:`${activePlanet.symbol} ${activePlanet.name} ${activePlanet.sign}'de`,cls:''},
+    {text:phase.name,cls:'teal'},
+    {text:`${s.asc} Yükselen`,cls:'gold'},
+    {text:`${s.sun} Güneşi`,cls:'pink'},
+  ];
+  document.getElementById('today-pills').innerHTML=pills.map(p=>`<span class="pill ${p.cls}">${p.text}</span>`).join('');
+
+  document.getElementById('moon-phase-sym').textContent=phase.sym;
+  document.getElementById('moon-phase-name').textContent=phase.name;
+  document.getElementById('moon-phase-text').textContent=phase.text;
+
+  document.getElementById('d-sun').textContent=s.sun;
+  document.getElementById('d-sun-deg').textContent=`${s.sunDeg}° ${s.sun}'da`;
+  document.getElementById('d-sun-icon').textContent=SYMS[s.sunIdx];
+  document.getElementById('d-moon').textContent=s.moon;
+  document.getElementById('d-moon-deg').textContent=`${s.moonDeg}° ${s.moon}'da`;
+  document.getElementById('d-moon-icon').textContent=SYMS[s.moonIdx];
+  document.getElementById('d-asc').textContent=s.asc;
+  document.getElementById('d-asc-deg').textContent=`${s.ascDeg}° ${s.asc}'da`;
+  document.getElementById('d-asc-icon').textContent=SYMS[s.ascIdx];
+  const jup=s.planets.find(p=>p.key==='jupiter');
+  document.getElementById('d-jup').textContent=jup?.sign||'—';
+
+  document.getElementById('active-transit').textContent=`${activePlanet.symbol} ${activePlanet.name} △ ${s.moon}`;
+  document.getElementById('active-transit-sub').textContent='Genişleme & Sezgi';
+
+  const transitItems=[
+    {sym:'♃',title:`Jüpiter üçgen ${s.moon} Ay`,text:`${s.moon} Ayının derinliğiyle Jüpiter'in genişletici enerjisi uyum içinde. Sezgisel kararlar için iyi bir gün.`,badge:'Harmonik',cls:'soft'},
+    {sym:'♄',title:`Satürn kare Venüs`,text:`İlişkilerde ya da maddi konularda sınırlama hissedebilirsin. Sabır ve netlik gerekiyor.`,badge:'Zorlayıcı',cls:'hard'},
+    {sym:'☿',title:`Merkür ${SIGNS[(s.sunIdx+2)%12]}'de`,text:`Zihinsel netlik yüksek. Uzun süredir ertelediğin görüşmeleri bugün yapabilirsin.`,badge:'Aktif',cls:''},
+  ];
+  document.getElementById('transit-list').innerHTML=transitItems.map(t=>`
+    <div class="transit-item">
+      <div class="transit-sym">${t.sym}</div>
+      <div class="transit-body"><div class="transit-title">${t.title}</div><div class="transit-text">${t.text}</div></div>
+      <div class="transit-badge ${t.cls}">${t.badge}</div>
+    </div>`).join('');
+
+  document.getElementById('weekly-snippet').textContent=getWeeklyMain(s);
+}
+
+function getTodayTitle(s){
+  const combos={'Boğa+Balık':'Maddi & Manevi Denge','Koç+Akrep':'Güç & Dönüşüm','İkizler+Yay':'Zihin Genişliyor','Yengeç+Oğlak':'Aile & Kariyer Dengesi'};
+  return combos[`${s.sun}+${s.moon}`]||combos[`${s.moon}+${s.sun}`]||`${s.sun} Enerjisi Yükseliyor`;
+}
+function getTodayText(s,activePlanet,phase){
+  return `${phase.name} döneminde Ay senin ${s.asc} Yükselişinle rezonans kuruyor. ${s.moon} Ayının ${SIGN_TRAITS[s.moon]?.str||'derin doğası'} bugün öne çıkıyor. ${activePlanet.name}'in ${activePlanet.sign}'deki hareketi ${SIGN_TRAITS[s.sun]?.career||'hayat alanlarını'} etkiliyor. ${SIGN_TRAITS[s.sun]?.ch||'Dikkatli ol'} konusunda farkındalıklı ol.`;
+}
+
+// ═══════════════════════════════════════════════
+// BIRTH CHART CANVAS
+// ═══════════════════════════════════════════════
+function buildChart(s){
+  const canvas=document.getElementById('birth-chart');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const parent=canvas.parentElement;
+  const size=Math.max(200,Math.min(parent?.clientWidth||400,420));
+  canvas.style.width=size+'px'; canvas.style.height=size+'px';
+  canvas.width=size*dpr; canvas.height=size*dpr;
+  ctx.scale(dpr,dpr);
+  const W=size,H=size,cx=W/2,cy=H/2,R=W/2-18;
+
+  ctx.clearRect(0,0,W,H);
+  // bg
+  const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  bg.addColorStop(0,'rgba(22,10,60,.97)');
+  bg.addColorStop(1,'rgba(8,4,28,.92)');
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();
+
+  // rings
+  [.9,.72,.52,.32].forEach((f,i)=>{
+    ctx.beginPath();ctx.arc(cx,cy,R*f,0,Math.PI*2);
+    ctx.strokeStyle=i===0?'rgba(139,92,246,.35)':'rgba(139,92,246,.12)';
+    ctx.lineWidth=i===0?1:.5;ctx.stroke();
+  });
+
+  // house lines
+  for(let i=0;i<12;i++){
+    const a=(i*30-90)*Math.PI/180;
+    const isCusp=i%3===0;
+    ctx.beginPath();
+    ctx.moveTo(cx+R*.32*Math.cos(a),cy+R*.32*Math.sin(a));
+    ctx.lineTo(cx+R*.9*Math.cos(a),cy+R*.9*Math.sin(a));
+    ctx.strokeStyle=isCusp?'rgba(200,168,75,.4)':'rgba(139,92,246,.1)';
+    ctx.lineWidth=isCusp?1:.4;ctx.stroke();
+  }
+
+  // zodiac symbols
+  const startIdx=s.ascIdx;
+  SYMS.forEach((sym,i)=>{
+    const si=(startIdx+i)%12;
+    const a=(i*30+15-90)*Math.PI/180;
+    const r=R*.81;
+    ctx.font=`${Math.max(11,R*.036)}px serif`;
+    ctx.fillStyle='rgba(164,148,240,.75)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(SYMS[si],cx+r*Math.cos(a),cy+r*Math.sin(a));
+  });
+
+  // planets
+  const allPlanets=[
+    {key:'sun',name:'Güneş',symbol:'☉',signIdx:s.sunIdx,deg:s.sunDeg,color:'#e8c870'},
+    {key:'moon',name:'Ay',symbol:'☽',signIdx:s.moonIdx,deg:s.moonDeg,color:'#c8d8e8'},
+    {key:'asc',name:'Yükselen',symbol:'↑',signIdx:s.ascIdx,deg:s.ascDeg,color:'#b494f0'},
+    ...(s.planets||[]).map((p,i)=>({...p,color:['#6ee7b7','#f9a8d4','#fca5a5','#86efac','#fde68a','#a5f3fc','#ddd6fe','#fed7aa'][i%8]})),
+  ];
+
+  // aspect lines
+  const aspColors=[[0,3,'rgba(134,239,172,.28)'],[1,5,'rgba(200,216,232,.18)'],[0,4,'rgba(232,200,112,.22)'],[2,6,'rgba(252,165,165,.18)']];
+  const radii=[.60,.55,.65,.58,.62,.56,.63,.57,.61,.59,.64];
+  aspColors.forEach(([ai,bi,col])=>{
+    if(!allPlanets[ai]||!allPlanets[bi])return;
+    const pA=allPlanets[ai],pB=allPlanets[bi];
+    const angA=(pA.signIdx*30+pA.deg-90)*Math.PI/180;
+    const angB=(pB.signIdx*30+pB.deg-90)*Math.PI/180;
+    const rA=R*radii[ai%radii.length],rB=R*radii[bi%radii.length];
+    ctx.beginPath();
+    ctx.moveTo(cx+rA*Math.cos(angA),cy+rA*Math.sin(angA));
+    ctx.lineTo(cx+rB*Math.cos(angB),cy+rB*Math.sin(angB));
+    ctx.strokeStyle=col;ctx.lineWidth=.7;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);
+  });
+
+  // planet glyphs + click areas
+  allPlanets._hitAreas=[];
+  allPlanets.forEach((p,i)=>{
+    const angle=(p.signIdx*30+p.deg-90)*Math.PI/180;
+    const r=R*radii[i%radii.length];
+    const x=cx+r*Math.cos(angle),y=cy+r*Math.sin(angle);
+    allPlanets._hitAreas=allPlanets._hitAreas||[];
+    allPlanets._hitAreas.push({x,y,r:12,planet:p});
+
+    const halo=ctx.createRadialGradient(x,y,0,x,y,11);
+    halo.addColorStop(0,p.color+'44');halo.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fillStyle=halo;ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=p.color+'99';ctx.fill();
+    ctx.font=`bold ${Math.max(10,R*.03)}px serif`;
+    ctx.fillStyle=p.color;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(p.symbol,x,y);
+  });
+
+  // center
+  ctx.font=`${Math.max(16,R*.055)}px serif`;
+  ctx.fillStyle='rgba(200,168,75,.5)';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('✦',cx,cy);
+
+  // click handler
+  canvas._planets=allPlanets;
+  canvas.onclick=function(e){
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=size/(rect.width);
+    const mx=(e.clientX-rect.left)*scaleX;
+    const my=(e.clientY-rect.top)*scaleX;
+    for(const hit of(allPlanets._hitAreas||[])){
+      if(Math.hypot(mx-hit.x,my-hit.y)<hit.r+6){
+        showPlanetDetail(hit.planet,s);
+        document.querySelectorAll('.planet-card').forEach(c=>c.classList.remove('active'));
+        document.querySelector(`.planet-card[data-key="${hit.planet.key}"]`)?.classList.add('active');
+        return;
+      }
+    }
+  };
+
+  // planet grid
+  document.getElementById('planets-grid').innerHTML=allPlanets.map(p=>`
+    <div class="planet-card" data-key="${p.key}" onclick="showPlanetDetail(${JSON.stringify(p).replace(/"/g,'&quot;')},APP.state)">
+      <div class="pc-symbol">${p.symbol}</div>
+      <div class="pc-name">${p.name}</div>
+      <div class="pc-sign">${p.sign||SIGNS[p.signIdx]}</div>
+      <div class="pc-deg">${p.deg}°</div>
+    </div>`).join('');
+}
+
+function showPlanetDetail(planet,s){
+  const key=planet.key;
+  const meaning=PLANET_MEANINGS[key]||{name:planet.name,key:'',desc:''};
+  const signTrait=SIGN_TRAITS[planet.sign]||{};
+  const panel=document.getElementById('planet-detail');
+
+  const strengths=key==='sun'?[signTrait.str,signTrait.career]:
+    key==='moon'?[signTrait.love,'Derin duygusal zeka']:
+    key==='venus'?[signTrait.love,'Estetik duyarlılık']:
+    key==='mars'?[signTrait.career,'Fiziksel enerji']:
+    [signTrait.str,'Özgün potansiyel'];
+
+  const challenges=key==='sun'?[signTrait.ch,'Ego kırılganlıkları']:
+    key==='moon'?[signTrait.ch,'Duygusal tepkisellik']:
+    [signTrait.ch,'Dengesiz dönemler'];
+
+  panel.innerHTML=`
+    <div class="pd-symbol">${planet.symbol}</div>
+    <div class="pd-name">${meaning.name}</div>
+    <div class="pd-sign">${planet.sign||SIGNS[planet.signIdx]} · ${planet.deg}°</div>
+    <div class="pd-section">
+      <div class="pd-section-title">Temel Anlam</div>
+      <div class="pd-text">${meaning.key} — ${meaning.desc}</div>
+    </div>
+    <div class="pd-section">
+      <div class="pd-section-title">${planet.sign||SIGNS[planet.signIdx]}'deki Etkisi</div>
+      <div class="pd-text">${meaning.name} ${planet.sign||SIGNS[planet.signIdx]} burcundayken ${signTrait.el||''} elementi güçlenerek ${meaning.key.toLowerCase()} alanında ${signTrait.str||'özel bir enerji'} getiriyor.</div>
+    </div>
+    <div class="pd-section">
+      <div class="pd-section-title">Güçlü Taraflar</div>
+      <div>${(strengths||[]).map(t=>`<span class="pd-tag green">${t}</span>`).join('')}</div>
+    </div>
+    <div class="pd-section">
+      <div class="pd-section-title">Zorlayıcı Taraflar</div>
+      <div>${(challenges||[]).map(t=>`<span class="pd-tag red">${t}</span>`).join('')}</div>
+    </div>
+    <div class="pd-section">
+      <div class="pd-section-title">İlişkilerde</div>
+      <div class="pd-text">${signTrait.love||'Özgün bir sevgi dili taşıyorsun'}.</div>
+    </div>
+    <div class="pd-section">
+      <div class="pd-section-title">Kariyerde</div>
+      <div class="pd-text">${signTrait.career||'Benzersiz kariyer potansiyeli'}.</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// FORECASTS
+// ═══════════════════════════════════════════════
+function buildForecasts(s){
+  const today=new Date();
+  const d=today.getDate();
+  const months=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const m=today.getMonth();
+  const st=SIGN_TRAITS[s.sun]||{};
+  const mt=SIGN_TRAITS[s.moon]||{};
+  const at=SIGN_TRAITS[s.asc]||{};
+
+  const sunPct=60+d%30;
+  const moonPct=55+(d*3)%35;
+  const mercPct=50+(d*2)%40;
+
+  setEnergy('fc-sun',`${s.sun} Güneşinin ${st.el||'güçlü'} elementi bugün ${st.str||'güçlü yönlerin'} öne çıkarıyor. ${at.ruler||'Yükselen yöneticin'} pratik kararlar için destek sağlıyor. ${st.ch||'Dikkat noktaları'} konusunda bilinçli ol.`,sunPct,'g');
+  setEnergy('fc-moon',`${s.moon} Ayının ${mt.el||'derin'} doğası duygusal alanda güçlü bir akış yaratıyor. ${mt.str||'Sezgisel yetkin'} bu dönemde dorukta. Ancak ${mt.ch||'duygusal sınırlar'} konusunda kendinle dürüst ol.`,moonPct,'p');
+  setEnergy('fc-merc',`Merkür bugün iletişim alanını aydınlatıyor. ${s.sun} doğanın analitik yönü öne çıkıyor — önemli görüşmeler için uygun bir gün olabilir.`,mercPct,'t');
+
+  document.getElementById('fc-venus').textContent=`${s.sun} Güneşinin ${st.love||'sevgi doğası'} bugün parlıyor. Venüs'ün mevcut hareketi ilişkilerde yumuşama getiriyor. Kendini ifade etmekten çekinme.`;
+  document.getElementById('fc-mars').textContent=`Mars enerjisi bu dönemde ${s.asc} Yükselişini destekliyor. Fiziksel enerji ortalama üstünde — bu enerjiyi verimli kanalize edersen büyük adımlar atabilirsin.`;
+
+  document.getElementById('fc-week-main').textContent=getWeeklyMain(s);
+  document.getElementById('fc-week-warn').textContent=`Salı-Perşembe arası Merkür-Mars karesi iletişimde sürtüşmeler yaratabilir. ${s.sun} Güneşinin sabrı seni koruyor. Finansal konularda bu hafta aceleci kararlardan kaçın.`;
+
+  const weekDates=[
+    {date:'Bugün',event:`Ay ${s.moon} burcuna kavuşum — duygusal netlik`,type:'Ay Transiti'},
+    {date:'Çarşamba',event:`Venüs ${SIGNS[(s.sunIdx+3)%12]}'e giriyor — ilişkilerde yumuşama`,type:'Gezegen Geçişi'},
+    {date:'Cuma',event:`Jüpiter ${s.moon} Ayına üçgen açı — şans ve sezgi`,type:'Harmonik Açı'},
+  ];
+  document.getElementById('fc-week-dates').innerHTML=weekDates.map(t=>`<div class="tl-item"><div class="tl-date">${t.date}</div><div><div class="tl-event">${t.event}</div><div class="tl-type">${t.type}</div></div></div>`).join('');
+
+  document.getElementById('fc-month-main').textContent=`Bu ay ${s.sun} Güneşinin natal konumuna Güneş transiti yaklaşıyor — kişisel yenilenme için güçlü bir dönem. ${s.asc} Yükselişinin yöneticisi kariyer kapılarını zorlayabilir.`;
+  document.getElementById('fc-month-love').textContent=`Venüs bu ay ${s.sun} Güneşinle harmonik açı kuruyor. ${st.love||'Sevgi doğan'} öne çıkıyor. Mevcut ilişkide derinleşme ya da yeni bir bağ için güçlü dönem.`;
+  document.getElementById('fc-month-career').textContent=`${s.asc} Yükselişin kariyer konusunda sana ciddi bir görünüm veriyor. Ayın ortasından itibaren Satürn transiti uzun vadeli projelere odaklanmayı destekliyor.`;
+
+  const monthDates=[
+    {date:`${Math.min(d+3,28)} ${months[m]}`,event:'Dolunay — Tamamlamalar ve kararlar',type:'Ay Döngüsü'},
+    {date:`${Math.min(d+8,28)} ${months[m]}`,event:`Venüs ${SIGNS[(s.sunIdx+3)%12]}'e giriyor`,type:'Gezegen Geçişi'},
+    {date:`${Math.min(d+14,28)} ${months[m]}`,event:'Jüpiter-Güneş üçgen açısı — fırsat zirvesi',type:'Kişisel Transit'},
+    {date:`3 ${months[(m+1)%12]}`,event:'Yeni Ay — Niyet belirleme',type:'Ay Döngüsü'},
+  ];
+  document.getElementById('fc-month-dates').innerHTML=monthDates.map(t=>`<div class="tl-item"><div class="tl-date">${t.date}</div><div><div class="tl-event">${t.event}</div><div class="tl-type">${t.type}</div></div></div>`).join('');
+
+  document.getElementById('fc-year-main').textContent=`Bu yıl ${s.sun} Güneşinin hayat alanında Satürn'ün yapılandırıcı enerjisi etkili. Uzun vadeli temeller atılıyor. ${s.asc} Yükselişin dış dünyaya daha güçlü yansıyor.`;
+  document.getElementById('fc-year-theme').textContent=`"${s.sun} Gücü + ${s.asc} Görünürlüğü" — Bu yılın teması: ${st.str||'güçlü yönlerin'} daha fazla dünyaya taşımak. Kişisel dönüşüm hızlanıyor.`;
+
+  const yearPeriods=[
+    {date:`${months[m]}–${months[(m+2)%12]}`,event:`Satürn ${s.asc} Yükselişine kare — yapısal yeniden yapılanma`,type:'Zorlayıcı · ~8 hafta'},
+    {date:`${months[(m+3)%12]}`,event:'Jüpiter Güneşe kavuşum — kariyer ve vizyon zirvesi',type:'Fırsat · ~4 hafta'},
+    {date:`${months[(m+5)%12]}–${months[(m+6)%12]}`,event:`Venüs ${s.moon} Ay konumuna geçiş — derin duygusal bağlar`,type:'İlişki · ~6 hafta'},
+    {date:`${months[(m+9)%12]}`,event:'Plüton transiti — köklü dönüşüm başlıyor',type:'Dönüşüm · Uzun dönem'},
+  ];
+  document.getElementById('fc-year-periods').innerHTML=yearPeriods.map(t=>`<div class="tl-item"><div class="tl-date">${t.date}</div><div><div class="tl-event">${t.event}</div><div class="tl-type">${t.type}</div></div></div>`).join('');
+
+  document.getElementById('fc-up-intro').textContent=`Önümüzdeki altı ayda üç büyük dönem öne çıkıyor. ${s.sun} Güneşinin doğası değişimlere temkinli yaklaşır, ancak dış gezegenler köklü dönüşümler başlatıyor.`;
+  const upList=[
+    {date:`${months[(m+1)%12]}–${months[(m+2)%12]}`,event:`Satürn ${s.asc} Yükselişine kare — yapısal test`,type:'Zorlayıcı · ~8 hafta'},
+    {date:`${months[(m+3)%12]}`,event:'Jüpiter Güneş kavuşumu — büyük fırsat penceresi',type:'Fırsat · ~4 hafta'},
+    {date:`${months[(m+5)%12]}`,event:`Venüs ${s.moon} Ay konumuna — aşk ve yaratıcılık zirvesi`,type:'İlişki · ~3 hafta'},
+  ];
+  document.getElementById('fc-up-list').innerHTML=upList.map(t=>`<div class="tl-item"><div class="tl-date">${t.date}</div><div><div class="tl-event">${t.event}</div><div class="tl-type">${t.type}</div></div></div>`).join('');
+}
+
+function setEnergy(prefix,text,pct,cls){
+  document.getElementById(prefix).textContent=text;
+  document.getElementById(prefix+'-p').textContent=Math.min(pct,95)+'%';
+  setTimeout(()=>{document.getElementById(prefix+'-f').style.width=Math.min(pct,95)+'%';},400);
+}
+function getWeeklyMain(s){
+  const st=SIGN_TRAITS[s.sun]||{};
+  const mt=SIGN_TRAITS[s.moon]||{};
+  return `Bu hafta ${s.sun} Güneşinin ${st.el||'güçlü'} doğası sana zemin sağlarken, ${s.moon} Ayının ${mt.el||'derin'} akışkanlığı ilişkilerinde sezgisel rehberlik yapıyor. Pazartesi-Çarşamba Ay döngüsü yavaşlıyor — eski işleri tamamla. Perşembe Yeni Ay döngüsüne giriyor: niyetler belirlemek için mükemmel.`;
+}
+
+// ═══════════════════════════════════════════════
+// SYNASTRY
+// ═══════════════════════════════════════════════
+function buildSynastryPreFill(s){
+  document.getElementById('syn-name1').value=s.name;
+  document.getElementById('syn-date1').value=s.birthDate;
+  document.getElementById('syn-time1').value=s.birthTime;
+}
+
+function calcSynastry(){
+  const n1=document.getElementById('syn-name1').value.trim()||'Sen';
+  const d1=document.getElementById('syn-date1').value;
+  const n2=document.getElementById('syn-name2').value.trim()||'Partner';
+  const d2=document.getElementById('syn-date2').value;
+  if(!d1||!d2){alert('Her iki kişinin doğum tarihini gir!');return;}
+
+  const p1=new Date(d1),p2=new Date(d2);
+  const m1=p1.getMonth()+1,dy1=p1.getDate();
+  const m2=p2.getMonth()+1,dy2=p2.getDate();
+  const sun1=calcSunSign(m1,dy1),sun2=calcSunSign(m2,dy2);
+  const moon1=calcMoonSign(d1),moon2=calcMoonSign(d2);
+
+  const diff=Math.abs(sun1-sun2);
+  const compatBase=Math.max(0,100-diff*7);
+  const moonBonus=Math.abs(moon1-moon2)<3?10:0;
+  const score=Math.min(98,compatBase+moonBonus+Math.floor(Math.random()*8));
+
+  document.getElementById('syn-score').textContent=score+'%';
+  setTimeout(()=>{document.getElementById('syn-bar').style.width=score+'%';},300);
+  document.getElementById('syn-label').textContent=score>80?'Derin Uyum':score>60?'Güçlü Bağ':score>40?'Çalışılabilir Uyum':'Farklı Enerjiler';
+
+  const st1=SIGN_TRAITS[SIGNS[sun1]]||{};
+  const st2=SIGN_TRAITS[SIGNS[sun2]]||{};
+  document.getElementById('syn-analysis').textContent=`${n1}'in ${SIGNS[sun1]} Güneşi ile ${n2}'in ${SIGNS[sun2]} Güneşi arasında ${score>70?'güçlü bir çekim':'ilginç bir gerilim'} var. ${st1.el||''} ve ${st2.el||''} elementlerinin buluşması ${score>70?'birbirini tamamlayıcı':'farklı ihtiyaçlar ortaya çıkaran'} bir dinamik yaratıyor.`;
+
+  const strengths=[
+    {title:`${SIGNS[moon1]} ↔ ${SIGNS[moon2]} Ay Uyumu`,text:'Duygusal dalga boyları buluştuğunda derin bir anlayış doğuyor.'},
+    {title:`${st1.el||''} + ${st2.el||''} Elementi`,text:score>65?'Elementler birbirini dengeli destekliyor.':'Farklı elementler büyüme getiriyor.'},
+  ];
+  const challenges=[
+    {title:'İletişim Farkı',text:`${SIGNS[sun1]} ve ${SIGNS[sun2]}'in iletişim tarzları uyum gerektirebilir.`},
+    {title:'Karar Alma',text:`${st1.q||''} ve ${st2.q||''} nitelikler zaman zaman çatışabilir.`},
+  ];
+
+  document.getElementById('syn-strengths').innerHTML=strengths.map(a=>`<div class="aspect-card"><div class="aspect-title">${a.title}</div><div class="aspect-text">${a.text}</div></div>`).join('');
+  document.getElementById('syn-challenges').innerHTML=challenges.map(a=>`<div class="aspect-card"><div class="aspect-title">${a.title}</div><div class="aspect-text">${a.text}</div></div>`).join('');
+  document.getElementById('syn-timing').textContent=`Venüs transiti bu ay her iki haritayı da etkiliyor. İlişkide önemli adımlar için en güçlü dönem önümüzdeki 3 hafta. Satürn etkisi uzun vadeli bağlılık konusunu gündeme taşıyabilir.`;
+
+  document.getElementById('syn-result').classList.add('show');
+}
+
+// ═══════════════════════════════════════════════
+// PERSONALITY
+// ═══════════════════════════════════════════════
+function buildPersonality(s){
+  const st=SIGN_TRAITS[s.sun]||{};
+  const mt=SIGN_TRAITS[s.moon]||{};
+  const at=SIGN_TRAITS[s.asc]||{};
+
+  const cards=[
+    {icon:'☀️',title:'Temel Kişilik',text:`${s.sun} Güneşin temel doğan: ${st.str||'güçlü bir irade'}. ${st.el||''} elementinin enerjisiyle hareket edersin.`},
+    {icon:'🌙',title:'Duygusal Yapı',text:`${s.moon} Ayın duygusal dünyan: ${mt.str||'derin sezgi'}. İçsel gerçekliğin ${mt.el||'akışkan'} bir yapıda.`},
+    {icon:'⬆️',title:'Dış Görünüm',text:`${s.asc} Yükselişin dünyaya yansıyan yanın: ${at.str||'güçlü bir varlık'}. İnsanlar seni ilk tanıdığında ${at.q||''} niteliklerini görür.`},
+    {icon:'🔥',title:'Gölge Taraf',text:`${st.ch||'Gelişim alanın'} ve ${mt.ch||'duygusal zorlukların'} gölge çalışman için kapı. Bunlarla yüzleşmek büyük dönüşüm getirir.`},
+    {icon:'💭',title:'Zihin Yapısı',text:`Merkür ${s.planets?.find(p=>p.key==='mercury')?.sign||'güçlü bir burçta'} — düşünce biçimin ${s.sun} enerjisiyle şekilleniyor.`},
+    {icon:'❤️',title:'Sevgi Dili',text:`Venüs ${s.planets?.find(p=>p.key==='venus')?.sign||'özel bir burçta'} — ${st.love||'kendine özgü bir sevgi dili'} taşıyorsun.`},
+  ];
+
+  document.getElementById('pers-grid').innerHTML=cards.map(c=>`
+    <div class="pers-card">
+      <div class="pers-icon">${c.icon}</div>
+      <div class="pers-title">${c.title}</div>
+      <div class="pers-text">${c.text}</div>
+    </div>`).join('');
+
+  const strengths=[
+    st.str||'Güçlü irade',
+    mt.str||'Derin sezgi',
+    at.str||'Güçlü varlık',
+    st.career||'Kariyer zekası',
+  ];
+  const challenges=[
+    st.ch||'Egonun gölgesi',
+    mt.ch||'Duygusal tepkisellik',
+    at.ch||'Yüzey ile derinlik çatışması',
+  ];
+
+  document.getElementById('pers-strengths').innerHTML=strengths.map(t=>`<div class="strength-item"><div class="strength-dot green"></div>${t}</div>`).join('');
+  document.getElementById('pers-challenges').innerHTML=challenges.map(t=>`<div class="strength-item"><div class="strength-dot red"></div>${t}</div>`).join('');
+  document.getElementById('pers-cycles').textContent=`${s.sun} Güneşinin ${st.q||'niteliği'} hayat döngülerinde tekrar eden bir tema: ${st.str||'güç'} ile ${st.ch||'zorluk'} arasında derin dönüşüm dönemleri. Satürn'ün 29 yıllık döngüsünde büyük sıçramalar yaşarsın. Jüpiter'in 12 yıllık turu fırsat kapılarını periyodik olarak açar.`;
+}
+
+// ═══════════════════════════════════════════════
+// CAREER
+// ═══════════════════════════════════════════════
+function buildCareer(s){
+  const st=SIGN_TRAITS[s.sun]||{};
+  const at=SIGN_TRAITS[s.asc]||{};
+  const jup=s.planets?.find(p=>p.key==='jupiter');
+  const sat=s.planets?.find(p=>p.key==='saturn');
+  const months=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const m=new Date().getMonth();
+
+  document.getElementById('car-tendency').textContent=`${s.sun} Güneşinin ${st.career||'kariyer eğilimi'} ve ${s.asc} Yükselişinin ${at.str||'güçlü görünümü'} kariyer yolunda belirleyici. ${jup?`Jüpiter ${jup.sign}'de olması büyüme alanını işaret ediyor.`:''}`;
+  document.getElementById('car-money').textContent=`Venüs haritanda ikinci ev bölgesini etkiliyor — maddi güvenlik ve değerler konusunda ${st.el||'güçlü'} bir içgüdü taşıyorsun. ${sat?`Satürn ${sat.sign}'deki konumu uzun vadeli finansal disiplini vurguluyor.`:''}`;
+  document.getElementById('car-talents').textContent=`${st.str||'Temel güçlerin'}, ${at.str||'görünürdeki yetkinliklerin'} ve ${SIGN_TRAITS[s.moon]?.str||'duygusal zekan'} — bu üçlü kariyer potansiyelinin çekirdeği. ${st.career||'Öne çıkan kariyer alanları'} özellikle güçlü.`;
+
+  const periods=[
+    {date:`${months[m]}–${months[(m+2)%12]}`,event:'Satürn transiti — yapısal yeniden yapılanma, kariyer temeli',type:'Kritik Dönem'},
+    {date:`${months[(m+4)%12]}`,event:'Jüpiter Güneş kavuşumu — yeni fırsatlar ve genişleme',type:'Fırsat Dönemi'},
+    {date:`${months[(m+7)%12]}–${months[(m+8)%12]}`,event:'Mars transit pik — güçlü eylem ve ilerleme',type:'Eylem Dönemi'},
+  ];
+  document.getElementById('car-periods').innerHTML=periods.map(t=>`<div class="tl-item"><div class="tl-date">${t.date}</div><div><div class="tl-event">${t.event}</div><div class="tl-type">${t.type}</div></div></div>`).join('');
+  document.getElementById('car-warn').textContent=`Merkür retro dönemlerinde (yılda 3 kez, ~3 hafta) önemli sözleşmeler ve iş kararları için beklemek avantajlı. ${st.ch||'Sabırsızlık'} tuzağına dikkat — büyük kararlar için acele etme.`;
+}
+
+// ═══════════════════════════════════════════════
+// PROFILE
+// ═══════════════════════════════════════════════
+function buildProfile(s){
+  document.getElementById('prof-name').textContent=s.name;
+  document.getElementById('prof-signs').textContent=`${s.sun} ☉  ·  ${s.moon} ☽  ·  ${s.asc} ↑`;
+  document.getElementById('prof-trio').innerHTML=[
+    {sym:SYMS[s.sunIdx],role:'Güneş',name:s.sun},
+    {sym:SYMS[s.moonIdx],role:'Ay',name:s.moon},
+    {sym:SYMS[s.ascIdx],role:'Yükselen',name:s.asc},
+  ].map(x=>`<div class="sign-item"><div class="sign-sym">${x.sym}</div><div class="sign-role">${x.role}</div><div class="sign-name">${x.name}</div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// AI CHAT
+// ═══════════════════════════════════════════════
+function initChat(s){
+  document.getElementById('ai-intro').textContent=`Merhaba ${s.name}! ${s.sun} Güneşin, ${s.moon} Ayın ve ${s.asc} Yükselişinle zengin bir harita görüyorum. Ne merak ediyorsun?`;
+}
+
+let chatHistory=[];
+let chatLoading=false;
+
+async function sendChat(text){
+  if(!APP.state){return;}
+  const input=document.getElementById('chat-input');
+  const msg=text||input.value.trim();
+  if(!msg||chatLoading)return;
+  if(!text){input.value='';input.style.height='auto';}
+
+  appendMsg(msg,'user');
+  chatHistory.push({role:'user',content:msg});
+
+  const key=sessionStorage.getItem('velum_groq_key');
+  if(!key||key==='YOUR_GROQ_API_KEY_HERE'){
+    appendMsg('AI sohbet için Groq API key gerekli. Profil → API Key Güncelle bölümünden ekleyebilirsin. console.groq.com adresinden ücretsiz alabilirsin.','ai');
+    return;
+  }
+
+  chatLoading=true;
+  const typing=appendTyping();
+
+  try{
+    const s=APP.state;
+    const sys=`Sen VELUM platformunun yapay zeka astroloğusun. Adın "Velum". Türkçe konuş.
+
+KULLANICI: ${s.name}
+Doğum: ${s.birthDate} | Saat: ${s.birthTime} | Yer: ${s.birthCity}
+Güneş: ${s.sun} ${s.sunDeg}° | Ay: ${s.moon} ${s.moonDeg}° | Yükselen: ${s.asc} ${s.ascDeg}°
+Gezegenler: ${(s.planets||[]).map(p=>`${p.name} ${p.sign}`).join(', ')}
+
+TARZ: Kişinin kendi haritasına özgü yorumlar yap. Hem güçlü hem zorlu yanları söyle. Kader kesinliği iddia etme. Haritadaki gerçek konumlara atıf yap. 3-5 cümle, derin ve doğal ses.`;
+
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1000,messages:[{role:'system',content:sys},...chatHistory.slice(-12)]})
+    });
+    const data=await res.json();
+    const reply=data.choices?.[0]?.message?.content?.trim()||'Kozmik bağlantı kurulamadı.';
+    chatHistory.push({role:'assistant',content:reply});
+    typing.remove();
+    appendMsg(reply,'ai');
+  }catch(e){
+    typing.remove();
+    appendMsg(getFallback(msg,APP.state),'ai');
+  }finally{chatLoading=false;}
+}
+
+function appendMsg(text,role){
+  const c=document.getElementById('chat-msgs');
+  const now=new Date();
+  const t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const div=document.createElement('div');
+  div.className=`msg ${role}`;
+  div.innerHTML=`<div class="msg-bubble">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div><div class="msg-time">${role==='user'?'Sen':'Velum'} · ${t}</div>`;
+  c.appendChild(div);
+  div.scrollIntoView({behavior:'smooth',block:'end'});
+}
+
+function appendTyping(){
+  const c=document.getElementById('chat-msgs');
+  const div=document.createElement('div');
+  div.className='msg ai';
+  div.innerHTML='<div class="msg-bubble"><div style="display:flex;gap:5px;align-items:center;padding:2px 0;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+  c.appendChild(div);
+  div.scrollIntoView({behavior:'smooth',block:'end'});
+  return div;
+}
+
+function getFallback(q,s){
+  const lq=q.toLowerCase();
+  if(lq.includes('aşk')||lq.includes('ilişki'))return`${s.sun} Güneşin ve ${s.moon} Ayının kombinasyonu aşk konusunda derin ama seçici bir yapı gösteriyor. Yüzeysel bağlar seni tatmin etmez — gerçek bağlantı ararsın.`;
+  if(lq.includes('kariyer')||lq.includes('para'))return`${s.asc} Yükselişin kariyer konusunda güçlü bir görünüm veriyor. ${SIGN_TRAITS[s.sun]?.career||'Doğal yeteneklerin'} öne çıkarırsın.`;
+  return`Haritana baktığımda ${s.sun}-${s.moon}-${s.asc} üçlüsü zengin bir dinamik gösteriyor. API bağlantısı geçici kesintili — birazdan tekrar dene.`;
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function bindNav(){
+  document.querySelectorAll('.nav-tab').forEach(b=>{
+    b.addEventListener('click',()=>showPage(b.dataset.page));
+  });
+  document.querySelectorAll('[data-navigate]').forEach(el=>{
+    el.addEventListener('click',()=>showPage(el.dataset.navigate));
+  });
+  document.querySelectorAll('.f-tab').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.f-tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.f-content').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById('fc-'+b.dataset.fc)?.classList.add('active');
+    });
+  });
+}
+
+function showPage(id){
+  if(id==='onboarding')document.getElementById('main-nav').classList.add('hidden');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===id));
+  if(id==='chart'&&APP.state)requestAnimationFrame(()=>buildChart(APP.state));
+}
+
+// ═══════════════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════════════
+function saveState(){
+  try{localStorage.setItem('velum_state',JSON.stringify(APP.state));}catch(_){}
+}
+function loadSaved(){
+  try{
+    const raw=localStorage.getItem('velum_state');
+    if(!raw)return;
+    const saved=JSON.parse(raw);
+    if(!saved?.birthDate)return;
+    ['inp-name','inp-date','inp-time','inp-city'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      const key=id.replace('inp-','').replace('-','');
+      const map={name:'name',date:'birthDate',time:'birthTime',city:'birthCity'};
+      if(saved[map[key.replace('inp','')]||key])el.value=saved[map[key.replace('inp','')]||key];
+    });
+    document.getElementById('inp-name').value=saved.name||'';
+    document.getElementById('inp-date').value=saved.birthDate||'';
+    document.getElementById('inp-time').value=saved.birthTime||'';
+    document.getElementById('inp-city').value=saved.birthCity||'';
+  }catch(_){}
+}
+</script>
 </body>
 </html>
