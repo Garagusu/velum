@@ -603,10 +603,56 @@ nav{
 // ═══════════════════════════════════════════════
 // GALAXY BACKGROUND
 // ═══════════════════════════════════════════════
+// GALAXY BACKGROUND — yıldızlar, takımyıldızlar,
+// meteor yağmuru, nebula
+// ═══════════════════════════════════════════════
 (function(){
   const c=document.getElementById('galaxy-canvas');
   const ctx=c.getContext('2d');
-  let W,H,stars=[],nebulas=[];
+  let W,H,stars=[],meteors=[],meteorTimer=0;
+
+  // ── Gerçek takımyıldız verileri (normalize 0-1 koordinat) ──
+  // Koordinatlar ekrana göre ölçeklendirilmiş, gerçek gökyüzü pozisyonlarına yakın
+  const CONSTELLATIONS=[
+    {name:'Büyük Ayı',color:'rgba(180,160,255,0.55)',stars:[
+      [.08,.12],[.13,.10],[.19,.09],[.25,.10],[.28,.15],[.22,.18],[.16,.17]
+    ],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,1],[3,5]]},
+    {name:'Küçük Ayı',color:'rgba(160,200,255,0.5)',stars:[
+      [.88,.08],[.84,.10],[.80,.09],[.77,.12],[.80,.17],[.83,.20],[.86,.18]
+    ],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]},
+    {name:'Orion',color:'rgba(200,180,255,0.5)',stars:[
+      [.52,.30],[.58,.28],[.62,.33],[.60,.40],[.54,.42],[.50,.38],[.55,.35],[.57,.35],[.55,.36]
+    ],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[0,6],[2,4]]},
+    {name:'Cassiopeia',color:'rgba(255,200,160,0.45)',stars:[
+      [.30,.06],[.36,.04],[.42,.07],[.47,.05],[.52,.08]
+    ],lines:[[0,1],[1,2],[2,3],[3,4]]},
+    {name:'Scorpius',color:'rgba(255,140,140,0.45)',stars:[
+      [.68,.55],[.72,.52],[.76,.54],[.78,.58],[.76,.63],[.72,.67],[.70,.72],[.68,.76],[.66,.74]
+    ],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]},
+    {name:'Leo',color:'rgba(255,220,120,0.45)',stars:[
+      [.38,.42],[.42,.38],[.48,.36],[.50,.40],[.48,.44],[.44,.46],[.40,.46]
+    ],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[3,5]]},
+  ];
+
+  // Parlak yıldızlar (isimli)
+  const NAMED_STARS=[
+    {name:'Polaris',nx:.86,ny:.07,r:2.2,color:'#fffbe8'},
+    {name:'Sirius',nx:.56,ny:.44,r:2.8,color:'#c8e8ff'},
+    {name:'Vega',nx:.72,ny:.22,r:2.4,color:'#e8f0ff'},
+    {name:'Arcturus',nx:.44,ny:.30,r:2.3,color:'#ffe8c8'},
+    {name:'Antares',nx:.70,ny:.58,r:2.2,color:'#ffb8a0'},
+    {name:'Rigel',nx:.62,ny:.40,r:2.4,color:'#d0e8ff'},
+    {name:'Betelgeuse',nx:.53,ny:.30,r:2.3,color:'#ffcca8'},
+    {name:'Aldebaran',nx:.34,ny:.36,r:2.0,color:'#ffd0a0'},
+  ];
+
+  const NEBULAS=[
+    {x:.18,y:.18,r:220,c:'rgba(139,92,246,.06)'},
+    {x:.82,y:.78,r:260,c:'rgba(76,29,149,.05)'},
+    {x:.50,y:.05,r:180,c:'rgba(200,168,75,.035)'},
+    {x:.12,y:.82,r:190,c:'rgba(45,212,191,.04)'},
+    {x:.90,y:.30,r:140,c:'rgba(244,114,182,.03)'},
+  ];
 
   function resize(){
     W=c.width=window.innerWidth;
@@ -616,54 +662,198 @@ nav{
   function init(){
     resize();
     stars=[];
-    for(let i=0;i<280;i++){
+    // Arka plan yıldızları
+    for(let i=0;i<320;i++){
       stars.push({
         x:Math.random()*W, y:Math.random()*H,
-        r:Math.random()*1.4+.2,
-        o:Math.random()*.7+.1,
-        s:Math.random()*.004+.001,
-        t:Math.random()*Math.PI*2,
-        cross:Math.random()>.88
+        r:Math.random()*1.3+.2,
+        o:Math.random()*.65+.1,
+        speed:Math.random()*.004+.001,
+        phase:Math.random()*Math.PI*2,
+        cross:Math.random()>.9,
       });
     }
-    nebulas=[
-      {x:.2,y:.2,r:180,c:'rgba(139,92,246,.055)'},
-      {x:.8,y:.75,r:220,c:'rgba(76,29,149,.045)'},
-      {x:.5,y:.05,r:150,c:'rgba(200,168,75,.03)'},
-      {x:.15,y:.8,r:160,c:'rgba(45,212,191,.03)'},
-    ];
+    // Takımyıldız yıldızlarını ekle (daha parlak)
+    CONSTELLATIONS.forEach(con=>{
+      con.stars.forEach(([nx,ny])=>{
+        stars.push({x:nx*W,y:ny*H,r:1.6,o:.8,speed:.002,phase:Math.random()*Math.PI*2,cross:false,constellation:true});
+      });
+    });
   }
 
+  // ── Meteor ──────────────────────────────────────
+  function spawnMeteor(){
+    const angle=Math.PI/4+Math.random()*.4; // ~45° açı
+    const startX=Math.random()*W*.8;
+    const startY=Math.random()*H*.3;
+    const len=80+Math.random()*140;
+    const speed=8+Math.random()*10;
+    meteors.push({
+      x:startX, y:startY,
+      dx:Math.cos(angle)*speed,
+      dy:Math.sin(angle)*speed,
+      len, speed,
+      life:1.0,        // 1→0 fade
+      decay:.018+Math.random()*.012,
+      width:1+Math.random()*1.2,
+      trail:[],
+    });
+  }
+
+  function drawMeteors(){
+    meteors.forEach((m,i)=>{
+      m.trail.push({x:m.x,y:m.y});
+      if(m.trail.length>18)m.trail.shift();
+      m.x+=m.dx; m.y+=m.dy;
+      m.life-=m.decay;
+
+      // Kuyruk
+      if(m.trail.length>1){
+        for(let j=1;j<m.trail.length;j++){
+          const prog=j/m.trail.length;
+          const alpha=m.life*prog*.9;
+          ctx.beginPath();
+          ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);
+          ctx.lineTo(m.trail[j].x,m.trail[j].y);
+          ctx.strokeStyle=`rgba(255,255,255,${alpha})`;
+          ctx.lineWidth=m.width*prog;
+          ctx.stroke();
+        }
+      }
+
+      // Baş parlaklığı
+      const headGlow=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,m.width*3);
+      headGlow.addColorStop(0,`rgba(255,255,255,${m.life*.9})`);
+      headGlow.addColorStop(1,'transparent');
+      ctx.fillStyle=headGlow;
+      ctx.beginPath();ctx.arc(m.x,m.y,m.width*3,0,Math.PI*2);ctx.fill();
+    });
+    // Ölü meteorları temizle
+    for(let i=meteors.length-1;i>=0;i--){
+      if(meteors[i].life<=0||meteors[i].x>W+50||meteors[i].y>H+50)meteors.splice(i,1);
+    }
+  }
+
+  // ── Takımyıldız çizimi ───────────────────────────
+  function drawConstellations(){
+    CONSTELLATIONS.forEach(con=>{
+      // Bağlantı çizgileri
+      ctx.strokeStyle=con.color.replace('0.55','0.18').replace('0.5','0.18').replace('0.45','0.18');
+      ctx.lineWidth=.6;
+      ctx.setLineDash([3,5]);
+      con.lines.forEach(([a,b])=>{
+        const s1=con.stars[a],s2=con.stars[b];
+        ctx.beginPath();
+        ctx.moveTo(s1[0]*W,s1[1]*H);
+        ctx.lineTo(s2[0]*W,s2[1]*H);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+
+      // Yıldızlar
+      con.stars.forEach(([nx,ny])=>{
+        const x=nx*W,y=ny*H;
+        const glow=ctx.createRadialGradient(x,y,0,x,y,5);
+        glow.addColorStop(0,con.color);
+        glow.addColorStop(1,'transparent');
+        ctx.fillStyle=glow;
+        ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle=con.color;
+        ctx.beginPath();ctx.arc(x,y,1.4,0,Math.PI*2);ctx.fill();
+      });
+
+      // Takımyıldız adı
+      if(W>600){
+        const cx2=con.stars.reduce((s,p)=>s+p[0],0)/con.stars.length*W;
+        const cy2=con.stars.reduce((s,p)=>s+p[1],0)/con.stars.length*H-18;
+        ctx.font='9px sans-serif';
+        ctx.fillStyle=con.color.replace(/[\d.]+\)$/,'0.35)');
+        ctx.textAlign='center';
+        ctx.fillText(con.name,cx2,cy2);
+      }
+    });
+
+    // İsimli parlak yıldızlar
+    NAMED_STARS.forEach(ns=>{
+      const x=ns.nx*W,y=ns.ny*H;
+      const t=Date.now()*.001;
+      const pulse=0.7+0.3*Math.sin(t*(0.8+ns.r*.2)+ns.nx*10);
+
+      // Dış parıltı
+      const glow=ctx.createRadialGradient(x,y,0,x,y,ns.r*5);
+      glow.addColorStop(0,ns.color.replace('#','rgba(').replace(/(..)(..)(..)$/,
+        (_,r,g,b)=>`${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},${pulse*.25})`));
+      glow.addColorStop(1,'transparent');
+      ctx.fillStyle=glow;
+      ctx.beginPath();ctx.arc(x,y,ns.r*5,0,Math.PI*2);ctx.fill();
+
+      // Merkez
+      ctx.fillStyle=ns.color;
+      ctx.globalAlpha=pulse;
+      ctx.beginPath();ctx.arc(x,y,ns.r,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+
+      // Çapraz ışın
+      ctx.strokeStyle=ns.color+(Math.floor(pulse*60).toString(16).padStart(2,'0'));
+      ctx.lineWidth=.6;
+      const arm=ns.r*3.5;
+      [-arm,arm].forEach(dx=>{
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+dx,y);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+dx);ctx.stroke();
+      });
+
+      // İsim etiketi
+      if(W>600&&pulse>.75){
+        ctx.font='9px sans-serif';
+        ctx.fillStyle=`rgba(200,216,232,${(pulse-.75)*1.5})`;
+        ctx.textAlign='left';
+        ctx.fillText(ns.name,x+ns.r*2+3,y+3);
+      }
+    });
+  }
+
+  let frame=0;
   function draw(){
     ctx.clearRect(0,0,W,H);
-    nebulas.forEach(n=>{
+
+    // Nebula
+    NEBULAS.forEach(n=>{
       const g=ctx.createRadialGradient(n.x*W,n.y*H,0,n.x*W,n.y*H,n.r);
-      g.addColorStop(0,n.c);
-      g.addColorStop(1,'transparent');
-      ctx.fillStyle=g;
-      ctx.beginPath();
-      ctx.arc(n.x*W,n.y*H,n.r,0,Math.PI*2);
-      ctx.fill();
+      g.addColorStop(0,n.c);g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x*W,n.y*H,n.r,0,Math.PI*2);ctx.fill();
     });
+
+    // Arka plan yıldızları
     stars.forEach(s=>{
-      s.t+=s.s;
-      const o=s.o*(0.5+0.5*Math.sin(s.t));
+      if(s.constellation)return; // takımyıldız yıldızları ayrı çizilecek
+      s.phase+=s.speed;
+      const o=s.o*(0.45+0.55*Math.sin(s.phase));
       ctx.fillStyle=`rgba(240,244,255,${o})`;
-      ctx.beginPath();
-      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-      ctx.fill();
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
       if(s.cross){
-        ctx.strokeStyle=`rgba(240,244,255,${o*.5})`;
-        ctx.lineWidth=.5;
-        const a=s.r*2.8;
+        ctx.strokeStyle=`rgba(240,244,255,${o*.45})`;
+        ctx.lineWidth=.4;
+        const a=s.r*2.5;
         ctx.beginPath();ctx.moveTo(s.x-a,s.y);ctx.lineTo(s.x+a,s.y);ctx.stroke();
         ctx.beginPath();ctx.moveTo(s.x,s.y-a);ctx.lineTo(s.x,s.y+a);ctx.stroke();
       }
     });
+
+    // Takımyıldızlar
+    drawConstellations();
+
+    // Meteorlar
+    frame++;
+    // Ortalama her 3-5 saniyede bir meteor (60fps → ~240 frame)
+    if(frame%220===0&&Math.random()>.3) spawnMeteor();
+    // Nadiren çift meteor
+    if(frame%480===0&&Math.random()>.6) spawnMeteor();
+    drawMeteors();
+
     requestAnimationFrame(draw);
   }
 
-  window.addEventListener('resize',resize);
+  window.addEventListener('resize',()=>{resize();init();});
   init();draw();
 })();
 
