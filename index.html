@@ -1366,8 +1366,10 @@ function createChart(){
   showPage('dashboard');
 }
 
-function buildAll(){
+function buildAll(stateOverride){
+  if(stateOverride) APP.state=stateOverride;
   const s=APP.state;
+  if(!s){console.error("buildAll: no state");return;}
   buildDashboard(s);
   buildChart(s);
   buildForecasts(s);
@@ -1384,7 +1386,10 @@ function buildAll(){
 // DASHBOARD
 // ═══════════════════════════════════════════════
 function buildDashboard(s){
-  document.getElementById('dash-name').textContent=s.name+' ✦';
+  if(!s||!s.sun){console.error('buildDashboard: invalid state',s);return;}
+  const el=document.getElementById('dash-name');
+  if(!el){console.error('dash-name not found');return;}
+  el.textContent=s.name+' ✦';
   const today=new Date();
   const transits=calcPlanets(today.toISOString().split('T')[0]);
   const phase=lunarPhase(today.toISOString().split('T')[0]);
@@ -1447,6 +1452,7 @@ function getTodayText(s,activePlanet,phase){
 // BIRTH CHART CANVAS
 // ═══════════════════════════════════════════════
 function buildChart(s){
+  if(!s||!s.sun){console.error('buildChart: invalid state');return;}
   const canvas=document.getElementById('birth-chart');
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
@@ -2928,12 +2934,36 @@ function loadSaved(){
     document.getElementById('inp-city').value=saved.birthCity||'';
 
     // Auto-restore full session — skip onboarding
-    APP.state=saved;
-    buildAll(saved);
-    document.getElementById('main-nav').classList.remove('hidden');
-    const bnavEl=document.getElementById('bottom-nav');
-    if(bnavEl) bnavEl.classList.add('visible');
-    showPage('dashboard');
+    // Re-calculate from scratch using saved birth data
+    // (ensures all computed fields are fresh, not stale JSON)
+    const d2=new Date(saved.birthDate+'T12:00:00');
+    const m2=d2.getMonth()+1, dy2=d2.getDate();
+    const[h2,min2]=(saved.birthTime||'12:00').split(':').map(Number);
+    const sunIdx2=calcSunSign(m2,dy2);
+    const moonIdx2=calcMoonSign(saved.birthDate);
+    const ascIdx2=calcAsc(m2,dy2,h2,min2);
+    const planets2=calcPlanets(saved.birthDate);
+
+    APP.state={
+      name:saved.name,
+      birthDate:saved.birthDate,
+      birthTime:saved.birthTime,
+      birthCity:saved.birthCity,
+      lat:saved.lat||null,
+      lon:saved.lon||null,
+      sun:SIGNS[sunIdx2], sunDeg:dy2%30, sunIdx:sunIdx2,
+      moon:SIGNS[moonIdx2], moonDeg:(m2*3+dy2)%30, moonIdx:moonIdx2,
+      asc:SIGNS[ascIdx2], ascDeg:(h2*2+min2/30)|0, ascIdx:ascIdx2,
+      planets:planets2,
+    };
+
+    setTimeout(()=>{
+      buildAll();
+      document.getElementById('main-nav').classList.remove('hidden');
+      const bnavEl=document.getElementById('bottom-nav');
+      if(bnavEl) bnavEl.classList.add('visible');
+      showPage('dashboard');
+    }, 80);
   }catch(_){}
 }
 </script>
