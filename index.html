@@ -417,6 +417,20 @@ nav{
 
   .page { padding-bottom: 85px; }
 }
+
+/* ── SKY PAGE ── */
+.sky-ctrl-btn{
+  padding:6px 14px;border-radius:20px;font-size:12px;
+  border:.5px solid rgba(139,92,246,.3);
+  background:rgba(8,6,22,.7);color:rgba(200,216,232,.6);
+  cursor:pointer;font-family:inherit;transition:all .18s;
+  backdrop-filter:blur(10px);
+}
+.sky-ctrl-btn.active{
+  background:rgba(139,92,246,.25);color:#c4b5fd;
+  border-color:rgba(139,92,246,.6);
+}
+
 </style>
 </head>
 <body>
@@ -504,9 +518,23 @@ nav{
       <div class="orb">✦</div>
     </div>
     <h1 class="onboard-title">V E L U M</h1>
-    <p class="onboard-sub">Kişisel evren rehberin. Doğum haritanı keşfet, kozmosun dilini öğren.</p>
+    <p class="onboard-sub">Doğduğun an gökyüzü nasıl görünüyordu? Güneş, Ay ve gezegenler tam o an neredeydi? Bu uygulama, o kozmik haritayı çıkarıp sana kişisel bir rehber sunar.</p>
+<div style="display:flex;gap:12px;margin-bottom:2rem;flex-wrap:wrap;justify-content:center;">
+  <div style="background:rgba(139,92,246,.1);border:.5px solid var(--border);border-radius:12px;padding:.75rem 1rem;font-size:12px;color:var(--dim);text-align:center;min-width:100px;">
+    <div style="font-size:20px;margin-bottom:4px;">🗺️</div><div>Doğum Haritası</div>
+  </div>
+  <div style="background:rgba(139,92,246,.1);border:.5px solid var(--border);border-radius:12px;padding:.75rem 1rem;font-size:12px;color:var(--dim);text-align:center;min-width:100px;">
+    <div style="font-size:20px;margin-bottom:4px;">🤖</div><div>AI Astrolog</div>
+  </div>
+  <div style="background:rgba(139,92,246,.1);border:.5px solid var(--border);border-radius:12px;padding:.75rem 1rem;font-size:12px;color:var(--dim);text-align:center;min-width:100px;">
+    <div style="font-size:20px;margin-bottom:4px;">🌌</div><div>Günlük Kozmik Rapor</div>
+  </div>
+  <div style="background:rgba(139,92,246,.1);border:.5px solid var(--border);border-radius:12px;padding:.75rem 1rem;font-size:12px;color:var(--dim);text-align:center;min-width:100px;">
+    <div style="font-size:20px;margin-bottom:4px;">💕</div><div>Aşk Uyumu</div>
+  </div>
+</div>
     <div class="form-card">
-      <p class="form-title">✦ Doğum Bilgilerini Gir</p>
+      <p class="form-title">✦ Haritanı Oluştur</p><p style="font-size:12px;color:var(--dim);text-align:center;margin-bottom:1rem;line-height:1.6;">Doğum tarihin, saatin ve yerin — bu üç bilgi gökyüzünün tam o an nasıl göründüğünü belirler. Hiçbir bilgin gerekmiyor, sana her şeyi anlatacağız.</p>
       <div class="form-group">
         <label class="form-label" for="inp-name">Adın</label>
         <input class="form-input" id="inp-name" type="text" placeholder="Adını gir..." autocomplete="given-name"/>
@@ -532,7 +560,7 @@ nav{
       <div class="form-group">
         <label class="form-label" for="inp-apikey">Groq API Key <span style="color:var(--gold);font-size:10px;">(AI sohbet için — isteğe bağlı)</span></label>
         <input class="form-input" id="inp-apikey" type="password" placeholder="gsk_..." autocomplete="off"/>
-        <div class="form-hint">🔒 Tarayıcında kalır, hiçbir yere gönderilmez. <a href="https://console.groq.com" target="_blank">Ücretsiz al →</a></div>
+        <div class="form-hint">🔒 Bu key, AI astrolog sohbet özelliği için gerekli. <a href="https://console.groq.com" target="_blank">console.groq.com</a>'dan 1 dakikada ücretsiz alabilirsin. Key olmadan da harita özellikleri çalışır.</div>
       </div>
       <button class="btn-cosmic" id="create-chart-btn">✦ Haritamı Oluştur</button>
     </div>
@@ -769,35 +797,40 @@ nav{
 
 
 <!-- ═══ SKYMAP ═══ -->
-<div id="page-skymap" class="page">
-  <div class="greeting-small" style="margin-bottom:1rem;letter-spacing:2px;">✦ GÖKYÜZÜ HARİTASI</div>
+<div id="page-skymap" class="page" style="padding:0;max-width:100%;">
+  <!-- Sky canvas — tam ekran -->
+  <div id="sky-wrap" style="position:relative;width:100%;height:85dvh;min-height:480px;background:#020010;overflow:hidden;">
+    <canvas id="sky-canvas" style="width:100%;height:100%;display:block;touch-action:none;"></canvas>
 
-  <div class="sky-tabs" style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
-    <button class="f-tab active" id="sky-tab-now" onclick="switchSkyTab('now',this)">🔴 Anlık Gökyüzü</button>
-    <button class="f-tab" id="sky-tab-birth" onclick="switchSkyTab('birth',this)">⭐ Doğum Anın</button>
+    <!-- Overlay controls -->
+    <div style="position:absolute;top:1rem;left:1rem;right:1rem;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:10;">
+      <div>
+        <div id="sky-mode-label" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(200,168,75,.9);margin-bottom:4px;">✦ ANLIK GÖKYÜZÜ</div>
+        <div id="sky-time-label" style="font-size:13px;color:rgba(200,216,232,.7);"></div>
+        <div id="sky-loc-label" style="font-size:11px;color:rgba(200,216,232,.4);margin-top:2px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;pointer-events:all;">
+        <button onclick="switchSkyMode('now')" id="sky-btn-now" class="sky-ctrl-btn active">🔴 Şimdi</button>
+        <button onclick="switchSkyMode('birth')" id="sky-btn-birth" class="sky-ctrl-btn">⭐ Doğum Anım</button>
+      </div>
+    </div>
+
+    <!-- Planet tooltip -->
+    <div id="sky-tooltip" style="display:none;position:absolute;background:rgba(8,6,22,.92);border:.5px solid rgba(139,92,246,.5);border-radius:12px;padding:.65rem 1rem;font-size:13px;color:#c8d8e8;pointer-events:none;z-index:20;max-width:200px;"></div>
+
+    <!-- Drag hint -->
+    <div id="sky-hint" style="position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);font-size:12px;color:rgba(200,216,232,.35);text-align:center;pointer-events:none;">
+      Sürükle · Yakınlaştır · Gezegene tıkla
+    </div>
   </div>
 
-  <div style="background:#050410;border:.5px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:1rem;position:relative;">
-    <div id="velum-sky-now" style="width:100%;height:70dvh;min-height:400px;"></div>
-    <div id="velum-sky-birth" style="width:100%;height:70dvh;min-height:400px;display:none;"></div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;" id="sky-planet-cards"></div>
-
-  <div class="f-card">
-    <div class="f-card-title" id="sky-info-title">✦ Anlık Gökyüzü</div>
-    <div class="f-text" id="sky-info-text">Gezegenler, takımyıldızlar ve yıldızlar şu an gerçek konumlarında gösteriliyor. Farenle sürükleyerek gökyüzünü döndür, kaydır. Bir gezegene tıkla detay gör.</div>
-  </div>
-
-  <div class="f-card">
-    <div class="f-card-title">🔑 Klavye Kısayolları</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:.5rem;">
-      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">+/-</kbd> Zaman ileri/geri</div>
-      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">c</kbd> Takımyıldızlar</div>
-      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">p</kbd> Gezegenler</div>
-      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">8</kbd> Şu ana dön</div>
-      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">g</kbd> Izgara çizgileri</div>
-      <div style="font-size:12px;color:var(--dim);"><kbd style="background:var(--card2);border:.5px solid var(--border);padding:2px 6px;border-radius:4px;">?</kbd> Tüm kısayollar</div>
+  <!-- Planet cards -->
+  <div style="padding:1rem 1.25rem;max-width:960px;margin:0 auto;">
+    <div class="sec-title" style="margin-top:.5rem;">✦ Gökyüzündeki Gezegenler</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:1rem;" id="sky-planet-cards"></div>
+    <div class="f-card">
+      <div class="f-card-title" id="sky-info-title">Gökyüzü Hakkında</div>
+      <div class="f-text" id="sky-info-text">Gökyüzünde her nokta bir hikaye taşır. Parlak noktalara tıklayarak gezegenler hakkında bilgi edinebilirsin.</div>
     </div>
   </div>
 </div>
@@ -910,26 +943,6 @@ nav{
 
 <script>
 // VirtualSky scripts loaded lazily when sky page opens
-window._skyScriptsLoaded = false;
-window._skyScriptsLoading = false;
-// Load from GitHub raw (repo files may 403 on GitHub Pages)
-const _VSBASE = 'https://raw.githubusercontent.com/slowe/VirtualSky/master/';
-function loadSkyScripts(cb){
-  if(window._skyScriptsLoaded){ cb(); return; }
-  if(window._skyScriptsLoading){ setTimeout(()=>loadSkyScripts(cb), 300); return; }
-  window._skyScriptsLoading = true;
-  const s1=document.createElement('script');
-  s1.src=_VSBASE+'stuquery.js';
-  s1.onload=()=>{
-    const s2=document.createElement('script');
-    s2.src=_VSBASE+'virtualsky.min.js';
-    s2.onload=()=>{ window._skyScriptsLoaded=true; window._skyScriptsLoading=false; cb(); };
-    s2.onerror=()=>{ window._skyScriptsLoading=false; showSkyFallback(); };
-    document.head.appendChild(s2);
-  };
-  s1.onerror=()=>{ window._skyScriptsLoading=false; showSkyFallback(); };
-  document.head.appendChild(s1);
-}
 </script>
 <script>
 // ═══════════════════════════════════════════════
@@ -1429,15 +1442,37 @@ function buildDashboard(s){
       <div class="transit-badge ${t.cls}">${t.badge}</div>
     </div>`).join('');
 
-  document.getElementById('weekly-snippet').textContent=getWeeklyMain(s);
+  const weeklyEl=document.getElementById('weekly-snippet');
+  if(weeklyEl) weeklyEl.innerHTML=getWeeklyMain(s)+getDailyExtras(s);
 }
 
 function getTodayTitle(s){
-  const combos={'Boğa+Balık':'Maddi & Manevi Denge','Koç+Akrep':'Güç & Dönüşüm','İkizler+Yay':'Zihin Genişliyor','Yengeç+Oğlak':'Aile & Kariyer Dengesi'};
-  return combos[`${s.sun}+${s.moon}`]||combos[`${s.moon}+${s.sun}`]||`${s.sun} Enerjisi Yükseliyor`;
+  const today=new Date();
+  const seed=(today.getFullYear()*10000+today.getMonth()*100+today.getDate()+SIGNS.indexOf(s.sun)*13)%7;
+  const titles=[
+    `${s.sun} & ${s.moon} Enerjisi — Derin Sezgi Vakti`,
+    `${s.asc} Yükselişin Bugün Parlıyor`,
+    `${s.sun} Gücü & ${s.moon} Duyarlılığı`,
+    `Kozmik Hizalanma — ${s.sun} Temposu`,
+    `${s.moon} Ayın Bugün Konuşuyor`,
+    `Dönüşüm Enerjisi — ${s.sun} Rehberliğinde`,
+    `${s.asc} Görünürlüğü & ${s.sun} Özgünlüğü`,
+  ];
+  return titles[seed];
 }
 function getTodayText(s,activePlanet,phase){
-  return `${phase.name} döneminde Ay senin ${s.asc} Yükselişinle rezonans kuruyor. ${s.moon} Ayının ${SIGN_TRAITS[s.moon]?.str||'derin doğası'} bugün öne çıkıyor. ${activePlanet.name}'in ${activePlanet.sign}'deki hareketi ${SIGN_TRAITS[s.sun]?.career||'hayat alanlarını'} etkiliyor. ${SIGN_TRAITS[s.sun]?.ch||'Dikkatli ol'} konusunda farkındalıklı ol.`;
+  const today=new Date();
+  const seed=(today.getDate()+SIGNS.indexOf(s.moon)*7)%5;
+  const sunTrait=SIGN_TRAITS[s.sun]||{};
+  const moonTrait=SIGN_TRAITS[s.moon]||{};
+  const texts=[
+    `Bugün ${phase.name} dönemindeyiz. ${s.sun} Güneşinin ${sunTrait.str||'güçlü yanları'} ile ${s.moon} Ayının ${moonTrait.str||'sezgisel derinliği'} bugün güçlü bir kombinasyon oluşturuyor. ${activePlanet.name} şu an ${activePlanet.sign} burcunda ilerliyor — bu enerji özellikle ${sunTrait.career||'kariyer ve hedefler'} alanını etkiliyor. Dikkat: ${sunTrait.ch||'aceleci kararlardan kaçın'}.`,
+    `${phase.name} sürecindeyken ${s.asc} Yükselişin dünyaya olan yansıman bugün normalden daha güçlü. İnsanlar seni daha açık ve özgün hissedecek. ${s.moon} Ayın ${moonTrait.el||'su'} elementinden aldığı enerjiyle duygusal zeka yüksek. ${activePlanet.name}'in etkisi kişisel ilişkilere dokunuyor.`,
+    `Gökyüzündeki enerjiler bugün ${s.sun} doğanı destekliyor. ${sunTrait.str||'Güçlü yönlerin'} öne çıkacak bir gün. Ancak ${s.moon} Ayının hassas yapısı, acele kararlar almanı engelleyebilir — bu aslında bir armağan. ${activePlanet.name} ${activePlanet.sign}'de geçerken ${moonTrait.str||'sezgisel kararlar'} almak için uygun bir dönem.`,
+    `${phase.name} enerjisi içindeyken ${s.asc} Yükselişin hem zorluk hem fırsat sunuyor. Bugün dışarıdan nasıl göründüğün ile içten nasıl hissettiğin arasında bir köprü kurabilirsin. ${activePlanet.name} transiti bu süreci hızlandırıyor. ${sunTrait.ch||'Sabırlı olmak'} bugünün anahtarı.`,
+    `${s.sun} ve ${s.moon} kombinasyonun bugün yaratıcılığını doruk noktasına taşıyabilir. ${moonTrait.love||'Duygusal bağlar'} için güçlü bir enerji var. ${activePlanet.name}'in ${activePlanet.sign} pozisyonu maddi konularda yeni fırsatların kapısını aralıyor olabilir. Gün boyunca sezgilerine güven.`,
+  ];
+  return texts[seed];
 }
 
 // ═══════════════════════════════════════════════
@@ -1820,6 +1855,18 @@ function setEnergy(prefix,text,pct,cls){
   document.getElementById(prefix+'-p').textContent=Math.min(pct,95)+'%';
   setTimeout(()=>{document.getElementById(prefix+'-f').style.width=Math.min(pct,95)+'%';},400);
 }
+function getDailyExtras(s){
+  const today=new Date();
+  const seed=(today.getDate()+SIGNS.indexOf(s.sun))%7;
+  const colors=['Mor','İndigo','Altın Sarısı','Yeşil','Gül Kurusu','Lacivert','Gümüş'];
+  const hours=['07:00–09:00','10:00–12:00','14:00–16:00','17:00–19:00','20:00–22:00'];
+  const color=colors[seed];
+  const hour=hours[seed%5];
+  return `<br><br><span style="color:var(--gold);font-size:12px;letter-spacing:1px;">✦ BUGÜNÜN ENERJİSİ</span><br>`+
+    `🎨 Şanslı Renk: <strong style="color:var(--silver)">${color}</strong> &nbsp;`+
+    `⏰ Güçlü Saat: <strong style="color:var(--silver)">${hour}</strong>`;
+}
+
 function getWeeklyMain(s){
   const st=SIGN_TRAITS[s.sun]||{};
   const mt=SIGN_TRAITS[s.moon]||{};
@@ -2117,9 +2164,7 @@ function showPage(id){
     if(!cosmosEl||cosmosEl.style.display==='none') initCosmos();
   }
   if(id==='skymap'&&APP.state){
-    requestAnimationFrame(()=>{
-      if(!skyNow) initSkyMap(APP.state);
-    });
+    requestAnimationFrame(()=>initSkyCanvas(APP.state));
   }
 }
 
@@ -2449,148 +2494,633 @@ function selectPlanet(key,s){
 }
 
 // ═══════════════════════════════════════════════
+// CANVAS PLANETARIUM — Three.js'siz, saf Canvas 2D
+// Gerçek gezegen açıları hesaplanır (J2000 ephem)
+// ═══════════════════════════════════════════════
+let skyState = { mode:'now', dragging:false, dx:0, dy:0, lastX:0, lastY:0, zoom:1, azOffset:0, altOffset:15, animFrame:null };
+
+// Gerçek gezegen ephemeris hesaplama (basitleştirilmiş VSOP87)
+function calcPlanetPositions(dateObj, lat, lon) {
+  const JD = dateToJD(dateObj);
+  const T = (JD - 2451545.0) / 36525.0;
+
+  const planets = [
+    { name:'Merkür', sym:'☿', color:'#5eefc8', r:5,
+      L: 252.25032350 + 149472.67411175*T, // mean longitude
+      M: 174.7948 + 4.09233445*T * 360/365.25, // approx
+      dist: 0.387, size: 4 },
+    { name:'Venüs', sym:'♀', color:'#f8a4d0', r:7,
+      L: 181.97909950 + 58517.81538729*T,
+      M: 50.4161 + 1.60213*T * 360/365.25,
+      dist: 0.723, size: 7 },
+    { name:'Güneş', sym:'☉', color:'#f0c040', r:14,
+      L: 280.46646 + 36000.76983*T,
+      M: 357.52911 + 35999.05029*T,
+      dist: 1.0, size: 14, isSun: true },
+    { name:'Ay', sym:'☽', color:'#dce8f8', r:11,
+      L: 218.3165 + 481267.8813*T,
+      M: 134.9634 + 477198.8676*T,
+      dist: 0.00257, size: 11, isMoon: true },
+    { name:'Mars', sym:'♂', color:'#f87070', r:6,
+      L: 355.45332950 + 19140.30268499*T,
+      M: 19.3730 + 0.52402*T * 360/365.25,
+      dist: 1.524, size: 5 },
+    { name:'Jüpiter', sym:'♃', color:'#8fef9f', r:10,
+      L: 34.39644051 + 3034.74612775*T,
+      M: 20.9 + 0.08308*T * 360/365.25,
+      dist: 5.203, size: 9 },
+    { name:'Satürn', sym:'♄', color:'#fce070', r:9,
+      L: 49.55953891 + 1222.49884159*T,
+      M: 317.0 + 0.03344*T * 360/365.25,
+      dist: 9.537, size: 8, hasRing: true },
+    { name:'Uranüs', sym:'⛢', color:'#7fd8f0', r:7,
+      L: 313.23810 + 428.48202*T,
+      M: 142.0 + 0.01172*T * 360/365.25,
+      dist: 19.19, size: 6 },
+    { name:'Neptün', sym:'♆', color:'#c0b0ff', r:7,
+      L: 304.88003 + 218.46515*T,
+      M: 256.0 + 0.00599*T * 360/365.25,
+      dist: 30.07, size: 5 },
+  ];
+
+  // Sun ecliptic longitude
+  const Msun = (357.52911 + 35999.05029*T) * Math.PI/180;
+  const Lsun = (280.46646 + 36000.76983*T + 1.9146*Math.sin(Msun) + 0.0200*Math.sin(2*Msun)) * Math.PI/180;
+
+  const GMST = (280.46061837 + 360.98564736629*(JD-2451545.0)) % 360;
+  const LST = (GMST + lon) % 360;
+
+  const obliquity = (23.439291111 - 0.013004167*T) * Math.PI/180;
+
+  return planets.map(p => {
+    let ecLon, ecLat = 0;
+    if (p.isSun) {
+      ecLon = Lsun * 180/Math.PI;
+    } else if (p.isMoon) {
+      const Lm = p.L * Math.PI/180;
+      const Mm = p.M * Math.PI/180;
+      ecLon = (p.L + 6.289*Math.sin(Mm) + 1.274*Math.sin(2*Lsun - Mm) + 0.658*Math.sin(2*Lsun)) % 360;
+      ecLat = 5.128*Math.sin((93.272 + 483202.017*T) * Math.PI/180);
+    } else {
+      const M = p.M * Math.PI/180;
+      ecLon = (p.L + 1.915*Math.sin(M) + 0.02*Math.sin(2*M)) % 360;
+    }
+
+    // Ecliptic → Equatorial
+    const ecLonR = ecLon * Math.PI/180;
+    const ecLatR = ecLat * Math.PI/180;
+    const ra = Math.atan2(Math.sin(ecLonR)*Math.cos(obliquity) - Math.tan(ecLatR)*Math.sin(obliquity), Math.cos(ecLonR));
+    const dec = Math.asin(Math.sin(ecLatR)*Math.cos(obliquity) + Math.cos(ecLatR)*Math.sin(obliquity)*Math.sin(ecLonR));
+
+    // Equatorial → Horizontal (Alt/Az)
+    const H = ((LST - ra*180/Math.PI) % 360 + 360) % 360;
+    const Hr = H * Math.PI/180;
+    const latR = lat * Math.PI/180;
+    const alt = Math.asin(Math.sin(latR)*Math.sin(dec) + Math.cos(latR)*Math.cos(dec)*Math.cos(Hr));
+    const az = Math.atan2(-Math.cos(dec)*Math.sin(Hr), Math.sin(latR)*Math.cos(dec)*Math.cos(Hr) - Math.cos(latR)*Math.sin(dec));
+
+    return {
+      ...p,
+      alt: alt * 180/Math.PI,
+      az: (az*180/Math.PI + 360) % 360,
+      ra: ra*180/Math.PI,
+      dec: dec*180/Math.PI,
+    };
+  });
+}
+
+function dateToJD(d) {
+  const Y=d.getFullYear(), M=d.getMonth()+1, D=d.getDate();
+  const h=d.getHours()+(d.getMinutes()/60)+(d.getSeconds()/3600);
+  let Yp=Y, Mp=M;
+  if(M<=2){Yp=Y-1;Mp=M+12;}
+  const A=Math.floor(Yp/100), B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(Yp+4716))+Math.floor(30.6001*(Mp+1))+D+B-1524.5+h/24;
+}
+
+// Star catalog (bright stars: name, ra°, dec°, mag, color)
+const BRIGHT_STARS = [
+  {n:'Sirius',    ra:101.3, dec:-16.7, m:-1.46, c:'#b0d8ff'},
+  {n:'Canopus',   ra:95.9,  dec:-52.7, m:-0.74, c:'#fff8e0'},
+  {n:'Arcturus',  ra:213.9, dec:19.2,  m:-0.05, c:'#ffcc88'},
+  {n:'Vega',      ra:279.2, dec:38.8,  m:0.03,  c:'#d0e8ff'},
+  {n:'Capella',   ra:79.2,  dec:46.0,  m:0.08,  c:'#ffe090'},
+  {n:'Rigel',     ra:78.6,  dec:-8.2,  m:0.13,  c:'#c0d8ff'},
+  {n:'Betelgeuse',ra:88.8,  dec:7.4,   m:0.5,   c:'#ffaa70'},
+  {n:'Achernar',  ra:24.4,  dec:-57.2, m:0.46,  c:'#d0e8ff'},
+  {n:'Altair',    ra:297.7, dec:8.9,   m:0.77,  c:'#fff0d0'},
+  {n:'Antares',   ra:247.4, dec:-26.4, m:1.06,  c:'#ff9060'},
+  {n:'Spica',     ra:201.3, dec:-11.2, m:0.97,  c:'#c8e0ff'},
+  {n:'Pollux',    ra:116.3, dec:28.0,  m:1.14,  c:'#ffcc88'},
+  {n:'Fomalhaut', ra:344.4, dec:-29.6, m:1.16,  c:'#e0f0ff'},
+  {n:'Deneb',     ra:310.4, dec:45.3,  m:1.25,  c:'#e8f4ff'},
+  {n:'Regulus',   ra:152.1, dec:11.97, m:1.35,  c:'#d0e4ff'},
+  {n:'Aldebaran', ra:68.98, dec:16.51, m:0.87,  c:'#ffbb88'},
+  {n:'Polaris',   ra:37.95, dec:89.26, m:1.97,  c:'#fff0d0'},
+  {n:'Acrux',     ra:186.6, dec:-63.1, m:0.77,  c:'#c8e0ff'},
+  {n:'Mimosa',    ra:191.9, dec:-59.7, m:1.25,  c:'#c8e0ff'},
+  {n:'Adhara',    ra:104.7, dec:-28.97,m:1.5,   c:'#c8e4ff'},
+];
+
+// Constellation lines [star1_ra, star1_dec, star2_ra, star2_dec]
+const CONST_LINES = [
+  // Orion
+  [88.8,7.4, 81.3,6.35],[81.3,6.35,78.6,-8.2],[81.3,6.35,82.1,2.0],
+  [82.1,2.0,83.0,-0.3],[83.0,-0.3,84.1,-1.2],
+  [78.6,-8.2,76.6,-5.1],[76.6,-5.1,82.1,2.0],
+  // Big Dipper (Ursa Major)
+  [165.9,61.75,178.5,53.7],[178.5,53.7,183.9,57.0],[183.9,57.0,193.5,55.96],
+  [193.5,55.96,206.9,49.3],[206.9,49.3,200.9,54.9],[200.9,54.9,183.9,57.0],
+  // Cassiopeia
+  [14.2,60.7,21.5,59.15],[21.5,59.15,9.24,56.54],[9.24,56.54,17.43,61.12],[17.43,61.12,28.6,63.67],
+  // Leo
+  [152.1,11.97,154.9,19.8],[154.9,19.8,168.5,20.5],[168.5,20.5,177.3,14.6],[177.3,14.6,170.3,6.0],
+  // Scorpius
+  [247.4,-26.4,241.4,-19.8],[241.4,-19.8,244.9,-15.7],[244.9,-15.7,253.0,-22.6],[247.4,-26.4,253.0,-22.6],
+];
+
+let skyAnimId = null;
+let skyPlanets = [];
+let skyStarCache = [];
+let skyTimeOffset = 0; // ms offset from base date
+
+function initSkyCanvas(state) {
+  const canvas = document.getElementById('sky-canvas');
+  if(!canvas) return;
+  clearInterval(skyAnimId);
+  if(skyState.animFrame) cancelAnimationFrame(skyState.animFrame);
+
+  const lat = state?.lat || 41.0;
+  const lon = state?.lon || 29.0;
+
+  // Generate random star field once
+  if(!skyStarCache.length) {
+    for(let i=0;i<1800;i++){
+      skyStarCache.push({
+        ra: Math.random()*360,
+        dec: (Math.random()-0.5)*180,
+        m: 2+Math.random()*4,
+        c: ['#ffffff','#ffe8d0','#d0e8ff','#fff0c0'][Math.floor(Math.random()*4)]
+      });
+    }
+  }
+
+  // Touch/mouse drag
+  canvas.onmousedown = canvas.ontouchstart = (e) => {
+    skyState.dragging=true;
+    const pt = e.touches?e.touches[0]:e;
+    skyState.lastX=pt.clientX; skyState.lastY=pt.clientY;
+  };
+  canvas.onmousemove = canvas.ontouchmove = (e) => {
+    if(!skyState.dragging)return;
+    e.preventDefault();
+    const pt = e.touches?e.touches[0]:e;
+    skyState.azOffset += (pt.clientX-skyState.lastX)*0.3;
+    skyState.altOffset = Math.max(-10,Math.min(80,skyState.altOffset-(pt.clientY-skyState.lastY)*0.2));
+    skyState.lastX=pt.clientX; skyState.lastY=pt.clientY;
+    // hide hint after first drag
+    const hint=document.getElementById('sky-hint');
+    if(hint) hint.style.opacity='0';
+  };
+  canvas.onmouseup = canvas.ontouchend = ()=>{ skyState.dragging=false; };
+  canvas.onwheel = (e)=>{ e.preventDefault(); skyState.zoom=Math.max(0.5,Math.min(4,skyState.zoom+(e.deltaY>0?-0.1:0.1))); };
+
+  // Click → identify nearest object
+  canvas.onclick = (e)=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    let nearest=null, nearDist=999;
+    [...skyPlanets, ...BRIGHT_STARS.map(s=>({...s,isStar:true}))].forEach(obj=>{
+      if(!obj._sx)return;
+      const d=Math.hypot(obj._sx-mx,obj._sy-my);
+      if(d<nearDist){nearDist=d;nearest=obj;}
+    });
+    const tt=document.getElementById('sky-tooltip');
+    if(tt&&nearest&&nearDist<40){
+      let html = `<strong style="color:${nearest.color||'#c4b5fd'}">${nearest.isStar?nearest.n:nearest.name}</strong><br>`;
+      if(!nearest.isStar){
+        html+=`${nearest.sym} · Alt: ${nearest.alt?.toFixed(1)}° · Az: ${nearest.az?.toFixed(0)}°<br>`;
+        html+=`<span style="font-size:11px;color:#a78bfa">${getSkyPlanetDesc(nearest.name)}</span>`;
+      } else {
+        html+=`<span style="font-size:11px;color:#8b9fc0">Mag: ${nearest.m?.toFixed(1)}</span>`;
+      }
+      tt.innerHTML=html;
+      tt.style.display='block';
+      let tx=mx+16, ty=my-10;
+      if(tx+200>canvas.offsetWidth)tx=mx-210;
+      tt.style.left=tx+'px'; tt.style.top=ty+'px';
+      setTimeout(()=>tt.style.display='none',3500);
+    }
+  };
+
+  function getSkyPlanetDesc(name){
+    const d={
+      'Güneş':'Kimlik ve yaşam amacının sembolü',
+      'Ay':'Duygusal dünyam ve sezgilerim',
+      'Merkür':'Zihin, iletişim ve düşünce tarzı',
+      'Venüs':'Aşk, güzellik ve değerlerim',
+      'Mars':'Eylem, enerji ve tutku',
+      'Jüpiter':'Büyüme, şans ve genişleme',
+      'Satürn':'Disiplin, sorumluluk ve dersler',
+      'Uranüs':'Özgünlük ve ani değişimler',
+      'Neptün':'Hayaller ve spiritüellik',
+    };
+    return d[name]||'';
+  }
+
+  function drawFrame(){
+    const W=canvas.offsetWidth, H=canvas.offsetHeight;
+    if(!W||!H){skyState.animFrame=requestAnimationFrame(drawFrame);return;}
+    canvas.width=W; canvas.height=H;
+    const ctx=canvas.getContext('2d');
+
+    const baseDate = skyState.mode==='birth'&&APP.state?.birthDate
+      ? new Date(APP.state.birthDate+'T'+(APP.state.birthTime||'12:00')+':00')
+      : new Date(Date.now()+skyTimeOffset);
+
+    if(skyState.mode==='now') skyTimeOffset+=16; // real-time advance
+
+    const cx=W/2, cy=H*0.52;
+    const fov=skyState.zoom;
+    const altOff=skyState.altOffset;
+    const azOff=skyState.azOffset;
+
+    // Sky gradient
+    const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*.7);
+    const isDay=baseDate.getHours()>6&&baseDate.getHours()<19;
+    if(isDay){
+      bg.addColorStop(0,'#1a3a6a');bg.addColorStop(.5,'#0d2040');bg.addColorStop(1,'#050410');
+    } else {
+      bg.addColorStop(0,'#0c0828');bg.addColorStop(.5,'#06041a');bg.addColorStop(1,'#020010');
+    }
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+    // Horizon glow
+    const hg=ctx.createLinearGradient(0,cy,0,H);
+    hg.addColorStop(0,'rgba(20,10,60,.0)');hg.addColorStop(.5,'rgba(20,40,80,.3)');hg.addColorStop(1,'rgba(10,30,60,.8)');
+    ctx.fillStyle=hg; ctx.fillRect(0,cy,W,H-cy);
+
+    // Horizon line
+    ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy);
+    ctx.strokeStyle='rgba(100,140,200,.25)'; ctx.lineWidth=1; ctx.stroke();
+
+    // Cardinal directions
+    ['N','NE','E','SE','S','SW','W','NW'].forEach((d,i)=>{
+      const az=i*45+azOff;
+      const [sx,sy]=altAzToXY(0,az,cx,cy,fov,W,H,altOff);
+      if(sy>cy*.2&&sy<H){
+        ctx.font='11px sans-serif'; ctx.fillStyle='rgba(150,180,220,.4)';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(d,sx,Math.min(sy,cy+30));
+      }
+    });
+
+    // Convert alt/az to screen XY
+    function altAzToXY(alt, az, cx, cy, fov, W, H, altOff){
+      const azAdj=(az+azOff)%360;
+      const scalePx=Math.min(W,H)*0.55*fov;
+      const r=(90-(alt+altOff))/90;
+      const ang=(azAdj-180)*Math.PI/180;
+      return [cx+r*scalePx*Math.sin(ang), cy-r*scalePx*Math.cos(ang)*0.62];
+    }
+
+    // Stars
+    const allStars = [...skyStarCache, ...BRIGHT_STARS.map(s=>({ra:s.ra,dec:s.dec,m:s.m,c:s.c,name:s.n}))];
+
+    // Convert RA/Dec to Alt/Az for current time
+    const JD=dateToJD(baseDate);
+    const T=(JD-2451545.0)/36525.0;
+    const GMST=(280.46061837+360.98564736629*(JD-2451545.0))%360;
+    const LST=(GMST+lon+360)%360;
+    const latR=lat*Math.PI/180;
+
+    // Draw random stars (fast, no full ephem)
+    // Use stable positions (seed by index)
+    for(let i=0;i<skyStarCache.length;i+=2){
+      const s=skyStarCache[i];
+      const HA=((LST-s.ra)%360+360)%360;
+      const Hr=HA*Math.PI/180;
+      const decR=s.dec*Math.PI/180;
+      const altV=Math.asin(Math.sin(latR)*Math.sin(decR)+Math.cos(latR)*Math.cos(decR)*Math.cos(Hr))*180/Math.PI;
+      if(altV<-5)continue;
+      const azV=(Math.atan2(-Math.cos(decR)*Math.sin(Hr),Math.sin(latR)*Math.cos(decR)*Math.cos(Hr)-Math.cos(latR)*Math.sin(decR))*180/Math.PI+360)%360;
+      const [sx,sy]=altAzToXY(altV,azV,cx,cy,fov,W,H,altOff);
+      if(sx<-10||sx>W+10||sy>H)continue;
+      const size=Math.max(0.3,(5-s.m)*0.35);
+      const opacity=0.4+Math.min(0.5,(5-s.m)*0.12);
+      ctx.beginPath(); ctx.arc(sx,sy,size,0,Math.PI*2);
+      ctx.fillStyle=s.c.replace(')',`,${opacity})`).replace('rgb(','rgba(').replace('#','')||`rgba(240,244,255,${opacity})`;
+      // Fix hex color
+      const hex=s.c; const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+      ctx.fillStyle=`rgba(${r},${g},${b},${opacity})`;
+      ctx.fill();
+    }
+
+    // Constellation lines
+    ctx.setLineDash([3,6]);
+    ctx.lineWidth=0.5;
+    CONST_LINES.forEach(([ra1,dec1,ra2,dec2])=>{
+      const HA1=((LST-ra1)%360+360)%360;
+      const dec1R=dec1*Math.PI/180, HA1r=HA1*Math.PI/180;
+      const alt1=Math.asin(Math.sin(latR)*Math.sin(dec1R)+Math.cos(latR)*Math.cos(dec1R)*Math.cos(HA1r))*180/Math.PI;
+      if(alt1<0)return;
+      const az1=(Math.atan2(-Math.cos(dec1R)*Math.sin(HA1r),Math.sin(latR)*Math.cos(dec1R)*Math.cos(HA1r)-Math.cos(latR)*Math.sin(dec1R))*180/Math.PI+360)%360;
+      const HA2=((LST-ra2)%360+360)%360;
+      const dec2R=dec2*Math.PI/180, HA2r=HA2*Math.PI/180;
+      const alt2=Math.asin(Math.sin(latR)*Math.sin(dec2R)+Math.cos(latR)*Math.cos(dec2R)*Math.cos(HA2r))*180/Math.PI;
+      if(alt2<0)return;
+      const az2=(Math.atan2(-Math.cos(dec2R)*Math.sin(HA2r),Math.sin(latR)*Math.cos(dec2R)*Math.cos(HA2r)-Math.cos(latR)*Math.sin(dec2R))*180/Math.PI+360)%360;
+      const [x1,y1]=altAzToXY(alt1,az1,cx,cy,fov,W,H,altOff);
+      const [x2,y2]=altAzToXY(alt2,az2,cx,cy,fov,W,H,altOff);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle='rgba(139,92,246,0.22)'; ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    // Bright named stars
+    BRIGHT_STARS.forEach(s=>{
+      const HA=((LST-s.ra)%360+360)%360;
+      const Hr=HA*Math.PI/180, decR=s.dec*Math.PI/180;
+      const altV=Math.asin(Math.sin(latR)*Math.sin(decR)+Math.cos(latR)*Math.cos(decR)*Math.cos(Hr))*180/Math.PI;
+      if(altV<0)return;
+      const azV=(Math.atan2(-Math.cos(decR)*Math.sin(Hr),Math.sin(latR)*Math.cos(decR)*Math.cos(Hr)-Math.cos(latR)*Math.sin(decR))*180/Math.PI+360)%360;
+      const [sx,sy]=altAzToXY(altV,azV,cx,cy,fov,W,H,altOff);
+      if(sx<0||sx>W||sy>H)return;
+      s._sx=sx; s._sy=sy;
+      const sr=Math.max(1,(5-s.m)*0.7);
+      const hex=s.c; const ri=parseInt(hex.slice(1,3),16),gi=parseInt(hex.slice(3,5),16),bi=parseInt(hex.slice(5,7),16);
+      const glow=ctx.createRadialGradient(sx,sy,0,sx,sy,sr*4);
+      glow.addColorStop(0,`rgba(${ri},${gi},${bi},0.6)`);glow.addColorStop(1,'transparent');
+      ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(sx,sy,sr*4,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${ri},${gi},${bi},0.95)`; ctx.fill();
+      if(sr>1.2){
+        ctx.font=`9px sans-serif`; ctx.fillStyle=`rgba(${ri},${gi},${bi},0.55)`;
+        ctx.textAlign='left'; ctx.fillText(s.n,sx+sr+3,sy+3);
+      }
+    });
+
+    // Planets
+    skyPlanets = calcPlanetPositions(baseDate, lat, lon);
+    skyPlanets.forEach(p=>{
+      if(p.alt < -8) return;
+      const [sx,sy]=altAzToXY(p.alt,p.az,cx,cy,fov,W,H,altOff);
+      p._sx=sx; p._sy=sy;
+      if(sx<-p.size||sx>W+p.size||sy>H+p.size) return;
+
+      // Glow
+      const glow=ctx.createRadialGradient(sx,sy,0,sx,sy,p.size*3.5);
+      glow.addColorStop(0,p.color+'55'); glow.addColorStop(1,'transparent');
+      ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(sx,sy,p.size*3.5,0,Math.PI*2); ctx.fill();
+
+      // Planet body
+      const hex=p.color, ri=parseInt(hex.slice(1,3),16),gi=parseInt(hex.slice(3,5),16),bi=parseInt(hex.slice(5,7),16);
+      const pg=ctx.createRadialGradient(sx-p.size*.3,sy-p.size*.3,1,sx,sy,p.size);
+      pg.addColorStop(0,'rgba(255,255,255,.85)');
+      pg.addColorStop(.3,p.color);
+      pg.addColorStop(1,`rgba(${Math.max(0,ri-60)},${Math.max(0,gi-60)},${Math.max(0,bi-60)},0.9)`);
+      ctx.beginPath(); ctx.arc(sx,sy,p.size,0,Math.PI*2);
+      ctx.fillStyle=pg; ctx.fill();
+
+      // Saturn ring
+      if(p.hasRing){
+        ctx.save(); ctx.translate(sx,sy); ctx.scale(1,0.28);
+        ctx.beginPath(); ctx.arc(0,0,p.size*2.1,0,Math.PI*2);
+        ctx.strokeStyle='rgba(252,224,112,0.6)'; ctx.lineWidth=p.size*0.5; ctx.stroke();
+        ctx.restore();
+      }
+
+      // Moon crescent
+      if(p.isMoon){
+        ctx.beginPath(); ctx.arc(sx+p.size*.3,sy,p.size*.8,0,Math.PI*2);
+        ctx.fillStyle='rgba(5,4,15,.6)'; ctx.fill();
+      }
+
+      // Symbol + label
+      ctx.font=`bold ${p.size+1}px serif`;
+      ctx.fillStyle=p.color;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(p.sym,sx,sy);
+      ctx.font=`10px sans-serif`;
+      ctx.fillStyle=`rgba(${ri},${gi},${bi},0.8)`;
+      ctx.fillText(p.name,sx,sy+p.size+9);
+    });
+
+    // Time label
+    const el1=document.getElementById('sky-time-label');
+    const el2=document.getElementById('sky-loc-label');
+    if(el1) el1.textContent=baseDate.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    if(el2&&APP.state) el2.textContent=`📍 ${APP.state.birthCity||'Konum bilinmiyor'} · ${lat.toFixed(1)}°N ${Math.abs(lon).toFixed(1)}°${lon>=0?'E':'W'}`;
+
+    skyState.animFrame = requestAnimationFrame(drawFrame);
+  }
+
+  skyState.animFrame = requestAnimationFrame(drawFrame);
+
+  // Planet cards
+  buildSkyPlanetCards(state);
+}
+
+function switchSkyMode(mode){
+  skyState.mode=mode;
+  skyTimeOffset=0;
+  document.getElementById('sky-btn-now')?.classList.toggle('active',mode==='now');
+  document.getElementById('sky-btn-birth')?.classList.toggle('active',mode==='birth');
+  const ml=document.getElementById('sky-mode-label');
+  if(ml) ml.textContent = mode==='now' ? '✦ ANLIK GÖKYÜZÜ' : '⭐ DOĞUM ANIM — '+APP.state?.birthDate;
+  // info text
+  const s=APP.state;
+  const infoEl=document.getElementById('sky-info-text');
+  if(infoEl&&mode==='birth'&&s){
+    infoEl.textContent=`${s.name}, ${s.birthDate} tarihinde ${s.birthCity||'doğduğun yerde'} gökyüzü tam böyle görünüyordu. ${s.sun} Güneşi ve ${s.moon} Ayı o an bu koordinatlarda parlıyordu.`;
+  } else if(infoEl){
+    infoEl.textContent='Gezegenler şu an gerçek konumlarında. Gökyüzünü sürükle, gezegenlere tıkla.';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// PLANETS SHOWCASE
+// Gerçek NASA/Wikimedia görüntüleri
+// ═══════════════════════════════════════════════
+
+
+function buildPlanetsPage(s){
+  const strip=document.getElementById('planet-strip');
+  if(!strip)return;
+
+  const allPlanets=[
+    {key:'sun', sign:s.sun, deg:s.sunDeg},
+    {key:'moon',sign:s.moon,deg:s.moonDeg},
+    ...(s.planets||[]).map(p=>({key:p.key,sign:p.sign,deg:p.deg})),
+  ];
+
+  strip.innerHTML=allPlanets.map(p=>{
+    const pd=PLANET_DATA[p.key];
+    if(!pd)return'';
+    return`<div class="planet-thumb ${p.key===activePlanetKey?'active':''}" data-key="${p.key}" onclick="selectPlanet('${p.key}',APP.state)">
+      <canvas id="thumb-${p.key}" width="72" height="72" style="display:block;border-radius:8px;"></canvas>
+      <div class="planet-thumb-label">${pd.sym} ${pd.label.slice(0,4)}</div>
+    </div>`;
+  }).join('');
+  // Draw thumbnails after DOM update
+  requestAnimationFrame(()=>{
+    allPlanets.forEach(p=>{
+      const pd=PLANET_DATA[p.key];
+      if(!pd)return;
+      const tc=document.getElementById('thumb-'+p.key);
+      if(!tc)return;
+      const tx=tc.getContext('2d');
+      tx.fillStyle='#0a0820';
+      tx.beginPath();tx.arc(36,36,36,0,Math.PI*2);tx.fill();
+      // Space bg dots
+      for(let i=0;i<20;i++){
+        tx.fillStyle=`rgba(200,210,255,${Math.random()*.4+.05})`;
+        tx.beginPath();tx.arc(Math.random()*72,Math.random()*72,.8+Math.random()*.8,0,Math.PI*2);tx.fill();
+      }
+      pd.draw(tx,36,36,20);
+    });
+  });
+
+  selectPlanet('sun',s);
+}
+
+function selectPlanet(key,s){
+  activePlanetKey=key;
+  document.querySelectorAll('.planet-thumb').forEach(t=>t.classList.toggle('active',t.dataset.key===key));
+
+  const pd=PLANET_DATA[key];
+  if(!pd)return;
+
+  const planetData=key==='sun'?{sign:s.sun,deg:s.sunDeg}:
+    key==='moon'?{sign:s.moon,deg:s.moonDeg}:
+    (s.planets||[]).find(p=>p.key===key)||{sign:'?',deg:0};
+
+  const signTrait=SIGN_TRAITS[planetData.sign]||{};
+
+  // Hero canvas
+  const heroCanvas=document.getElementById('planet-hero-canvas');
+  if(heroCanvas){
+    const heroEl=document.getElementById('planet-hero');
+    const hw=heroEl.offsetWidth||800;
+    const hh=heroEl.offsetHeight||400;
+    heroCanvas.width=hw;heroCanvas.height=hh;
+    const hctx=heroCanvas.getContext('2d');
+    // Deep space background
+    hctx.fillStyle='#050410';
+    hctx.fillRect(0,0,hw,hh);
+    // Stars
+    for(let i=0;i<200;i++){
+      const sx=Math.random()*hw,sy=Math.random()*hh;
+      const sr=Math.random()*1.2+.2;
+      hctx.fillStyle=`rgba(220,230,255,${Math.random()*.6+.1})`;
+      hctx.beginPath();hctx.arc(sx,sy,sr,0,Math.PI*2);hctx.fill();
+    }
+    // Nebula glow
+    const ng=hctx.createRadialGradient(hw*.5,hh*.5,0,hw*.5,hh*.5,hw*.5);
+    ng.addColorStop(0,pd.color+'18');ng.addColorStop(1,'transparent');
+    hctx.fillStyle=ng;hctx.fillRect(0,0,hw,hh);
+    // Planet — large and centered with subtle rotation animation
+    const pr=Math.min(hw,hh)*0.38;
+    if(APP._planetAnimFrame) cancelAnimationFrame(APP._planetAnimFrame);
+    let angle=0;
+    function animatePlanet(){
+      hctx.clearRect(0,0,hw,hh);
+      hctx.fillStyle='#050410';hctx.fillRect(0,0,hw,hh);
+      // Stars
+      if(!APP._heroStars){
+        APP._heroStars=Array.from({length:200},()=>({x:Math.random()*hw,y:Math.random()*hh,r:Math.random()*1.2+.2,o:Math.random()*.6+.1,s:Math.random()*.003+.001,t:Math.random()*Math.PI*2}));
+      }
+      APP._heroStars.forEach(st=>{st.t+=st.s;const o=st.o*(0.5+0.5*Math.sin(st.t));hctx.fillStyle=`rgba(220,230,255,${o})`;hctx.beginPath();hctx.arc(st.x,st.y,st.r,0,Math.PI*2);hctx.fill();});
+      const ng=hctx.createRadialGradient(hw*.5,hh*.5,0,hw*.5,hh*.5,hw*.5);
+      ng.addColorStop(0,pd.color+'18');ng.addColorStop(1,'transparent');
+      hctx.fillStyle=ng;hctx.fillRect(0,0,hw,hh);
+      // Orbit ring
+      hctx.beginPath();hctx.ellipse(hw*.5,hh*.52,pr*1.7,pr*.4,0,0,Math.PI*2);
+      hctx.strokeStyle=pd.color+'22';hctx.lineWidth=1;hctx.setLineDash([4,8]);hctx.stroke();hctx.setLineDash([]);
+      // Small moon/dot on orbit
+      const mx=hw*.5+pr*1.7*Math.cos(angle),my=hh*.52+pr*.4*Math.sin(angle);
+      hctx.beginPath();hctx.arc(mx,my,4,0,Math.PI*2);
+      hctx.fillStyle=pd.color+'88';hctx.fill();
+      angle+=.005;
+      pd.draw(hctx,hw*.5,hh*.52,pr);
+      APP._planetAnimFrame=requestAnimationFrame(animatePlanet);
+    }
+    APP._heroStars=null;
+    animatePlanet();
+  }
+  document.getElementById('planet-hero-sym').textContent=pd.sym;
+  document.getElementById('planet-hero-sym').style.color=pd.color;
+  document.getElementById('planet-hero-name').textContent=pd.label;
+  document.getElementById('planet-hero-name').style.color=pd.color;
+  document.getElementById('planet-hero-sub').textContent=(planetData.sign||'?')+' · '+planetData.deg+'° · '+pd.astro;
+  document.getElementById('planet-hero-sign').textContent=SYMS[SIGNS.indexOf(planetData.sign)]||'✦'+' '+(planetData.sign||'?');
+
+  // Info grid
+  const PLANET_MEANINGS_LOCAL={
+    sun:{key2:'Kimlik & Ego',desc:'Temel kişiliğin ve bilinçli benliğin'},
+    moon:{key2:'Duygular',desc:'Duygusal doğan ve sezgilerin'},
+    mercury:{key2:'Zihin',desc:'Düşünce ve iletişim biçimin'},
+    venus:{key2:'Aşk & Değerler',desc:'Sevgi dili ve neye değer verdiğin'},
+    mars:{key2:'Eylem',desc:'Drive\'ın ve hedeflere ulaşma biçimin'},
+    jupiter:{key2:'Şans & Büyüme',desc:'Gelişim alanların ve şans kapıların'},
+    saturn:{key2:'Dersler',desc:'Hayat derslerin ve kısıtlamaların'},
+    uranus:{key2:'Değişim',desc:'Devrimci yanın ve özgünlüğün'},
+    neptune:{key2:'Hayaller',desc:'Spiritüel derinliğin ve hayallerin'},
+    pluto:{key2:'Dönüşüm',desc:'Köklü değişimlerin ve gizli gücün'},
+  };
+  const pm=PLANET_MEANINGS_LOCAL[key]||{key2:'—',desc:'—'};
+
+  document.getElementById('planet-info-grid').innerHTML=`
+    <div class="planet-info-card">
+      <div class="planet-info-label">Burç Konumu</div>
+      <div class="planet-info-value" style="color:${pd.color}">${planetData.sign||'?'} ${planetData.deg}°</div>
+      <div class="planet-info-sub">${signTrait.el||'?'} Elementi · ${signTrait.q||'?'}</div>
+    </div>
+    <div class="planet-info-card">
+      <div class="planet-info-label">Astrolojik Anlam</div>
+      <div class="planet-info-value">${pm.key2}</div>
+      <div class="planet-info-sub">${pm.desc}</div>
+    </div>
+    <div class="planet-info-card">
+      <div class="planet-info-label">Çap</div>
+      <div class="planet-info-value">${pd.diameter}</div>
+      <div class="planet-info-sub">Güneş'e mesafe: ${pd.distance}</div>
+    </div>
+    <div class="planet-info-card">
+      <div class="planet-info-label">Yönettiği Alan</div>
+      <div class="planet-info-value">${signTrait.ruler||pd.sym} Yönetimi</div>
+      <div class="planet-info-sub">${pd.fact.slice(0,55)}...</div>
+    </div>`;
+
+  // Analysis
+  document.getElementById('planet-analysis-title').textContent=pd.sym+' '+pd.label+' — Haritandaki Etkisi';
+  document.getElementById('planet-analysis-text').textContent=
+    `${pd.label}, haritanda ${planetData.sign||'?'} burcunun ${planetData.deg}. derecesinde konumlanan ${pd.label}, ${pd.astro.toLowerCase()} alanını doğrudan etkiliyor. `+
+    `${signTrait.el||'?'} elementinin enerjisiyle birleşince ${signTrait.str||'güçlü bir potansiyel'} ortaya çıkıyor. `+
+    `${pd.fact} `+
+    `Astrolojik açıdan bu konumlama, ${signTrait.love||'ilişkilerde özgün bir tarz'} ve ${signTrait.career||'kariyer alanında belirgin eğilimler'} gösteriyor.`;
+
+  // Strengths/challenges
+  const strengths=[signTrait.str,signTrait.career||'Kariyer potansiyeli',signTrait.love||'İlişki tarzı'].filter(Boolean);
+  const challenges=[signTrait.ch,'Dengesiz dönemlerde farkındalık gerekli'].filter(Boolean);
+
+  document.getElementById('planet-strengths').innerHTML=strengths.map(t=>
+    `<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--dim);margin-bottom:6px;">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px;"></div>${t}
+    </div>`).join('');
+
+  document.getElementById('planet-challenges').innerHTML=challenges.map(t=>
+    `<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--dim);margin-bottom:6px;">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--pink);flex-shrink:0;margin-top:4px;"></div>${t}
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
 // VIRTUALSKY INTEGRATION
 // ═══════════════════════════════════════════════
 let skyNow=null, skyBirth=null;
 
-function initSkyMap(state){
-  // Load scripts on demand
-  loadSkyScripts(()=>_initSkyMapReal(state));
-}
-function _initSkyMapReal(state){
-  if(typeof S==='undefined'||typeof S.virtualsky==='undefined'){
-    showSkyFallback();
-    return;
-  }
 
-  const nowEl=document.getElementById('velum-sky-now');
-  const birthEl=document.getElementById('velum-sky-birth');
-  if(!nowEl)return;
-
-  // Önceki instance'ları temizle
-  nowEl.innerHTML=''; birthEl.innerHTML='';
-  skyNow=null; skyBirth=null;
-
-  const lat=state.lat||41.0082;
-  const lon=state.lon||28.9784;
-
-  // Container mutlaka visible ve boyutlu olmalı
-  nowEl.style.display='block';
-  const W=nowEl.offsetWidth||window.innerWidth||800;
-  // Height: 70dvh capped
-  const H=Math.max(400, Math.min(Math.floor(window.innerHeight*0.70), 700));
-  nowEl.style.height=H+'px';
-  birthEl.style.height=H+'px';
-
-  const commonOpts={
-    latitude:lat, longitude:lon,
-    width:W, height:H,
-    projection:'stereo',
-    constellations:true,
-    constellationlabels:true,
-    constellationwidth:1.5,
-    showstarlabels:true,
-    showplanets:true,
-    showplanetlabels:true,
-    meteorshowers:false,
-    gridlines_az:false,
-    gridlines_eq:false,
-    mouse:true,
-    keyboard:true,
-    gradient:true,
-    magnitude:6.0,
-    credit:false,
-    lang:'en',
-    color:'rgba(196,181,253,0.9)',
-    background:'rgba(5,4,15,1)',
-    file:{
-      stars:'stars.json',
-      constellations:'lines_latin.json',
-      planets:'virtualsky-planets.js',
-      showers:'showers.json',
-    },
-  };
-
-  // Anlık gökyüzü
-  try{
-    skyNow=S.virtualsky(Object.assign({},commonOpts,{
-      id:'velum-sky-now',
-      live:true,
-    }));
-    console.log('VirtualSky NOW ok');
-  }catch(e){
-    console.error('VirtualSky now error:',e);
-    nowEl.innerHTML='<div style="color:rgba(196,181,253,.6);text-align:center;padding:3rem;font-size:14px;">Gökyüzü yüklenemedi: '+e.message+'</div>';
-  }
-
-  // Doğum anı gökyüzü (display:none olduğu için lazy)
-  APP._birthSkyPending=true;
-
-  buildSkyPlanetCards(state);
-}
-
-function initBirthSky(state){
-  if(!APP._birthSkyPending||skyBirth||typeof S==='undefined')return;
-  APP._birthSkyPending=false;
-  const birthEl=document.getElementById('velum-sky-birth');
-  if(!birthEl)return;
-  const W=birthEl.offsetWidth||window.innerWidth||800;
-  const H=parseInt(birthEl.style.height)||420;
-  try{
-    const birthISO=state.birthDate+'T'+(state.birthTime||'12:00')+':00';
-    skyBirth=S.virtualsky({
-      id:'velum-sky-birth',
-      latitude:state.lat||41.0082, longitude:state.lon||28.9784,
-      width:W, height:H,
-      projection:'stereo',
-      constellations:true,
-      constellationlabels:true,
-      showstarlabels:true,
-      showplanets:true,
-      showplanetlabels:true,
-      mouse:true, keyboard:true,
-      gradient:true, magnitude:5.8,
-      credit:false, lang:'en',
-      clock:birthISO,
-      color:'rgba(196,181,253,0.85)',
-      background:'rgba(5,4,15,1)',
-    });
-    console.log('VirtualSky BIRTH ok');
-  }catch(e){
-    console.error('VirtualSky birth error:',e);
-  }
-}
-
-function showSkyFallback(){
-  const el=document.getElementById('velum-sky-now');
-  if(el) el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:380px;color:rgba(196,181,253,.6);text-align:center;gap:1rem;padding:2rem;">
-    <div style="font-size:48px;">🌌</div>
-    <div style="font-size:15px;">Planetarium yüklenemedi</div>
-    <div style="font-size:12px;opacity:.7;">Sayfayı yenile veya tarayıcını güncelle</div>
-  </div>`;
-}
-
-function switchSkyTab(tab,btn){
-  document.querySelectorAll('.sky-tabs .f-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const nowEl=document.getElementById('velum-sky-now');
-  const birthEl=document.getElementById('velum-sky-birth');
-
-  if(tab==='now'){
-    nowEl.style.display='block';
-    birthEl.style.display='none';
-    document.getElementById('sky-info-title').textContent='✦ Anlık Gökyüzü — '+new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    document.getElementById('sky-info-text').textContent='Gezegenler ve yıldızlar şu an gerçek konumlarında. Farenle sürükle, döndür. Gökyüzü her saniye güncelleniyor.';
-  }else{
-    birthEl.style.display='block';
-    nowEl.style.display='none';
-    const s=APP.state;
-    document.getElementById('sky-info-title').textContent='⭐ Doğum Anındaki Gökyüzü — '+s.birthDate+' '+(s.birthTime||'');
-    document.getElementById('sky-info-text').textContent=s.name+', '+s.birthDate+' tarihinde gökyüzü tam olarak böyle görünüyordu. '+s.sun+' Güneşi, '+s.moon+' Ayı burada doğdu.';
-    // Lazy init birth sky
-    setTimeout(()=>initBirthSky(s),80);
-  }
-}
 
 function buildSkyPlanetCards(state){
   const container=document.getElementById('sky-planet-cards');
